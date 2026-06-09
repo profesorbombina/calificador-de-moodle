@@ -23,3 +23,12 @@ Fecha: 9 de junio de 2026
 - La URL de Google Sheets usa la exportación oficial a XLSX y requiere acceso público.
 - La v1 genera un libro nuevo para asegurar un informe consistente y profesional.
 
+## Mejoras de la versión 1
+
+- Nuevo título descriptivo y autoría en el pie.
+- Campo de actividades a realizar a la fecha.
+- Conteo de entregas con escalas textuales.
+- Métrica de Promedio del Curso.
+- Niveles y filtros de Riesgo Bajo, Medio y Alto.
+- Filtro por promedio.
+- Cantidad de entregas visible en el gráfico de actividades.

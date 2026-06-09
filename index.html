@@ -40,7 +40,7 @@
     <section class="hero">
       <div>
         <span class="version-pill">VERSIÓN 1 · TODO EN UNA PANTALLA</span>
-        <h2>Convertí datos de Moodle en decisiones claras.</h2>
+        <h2>Análisis del Calificador y Participantes de un Curso de Moodle</h2>
         <p>Cargá las calificaciones, pegá los participantes y obtené un tablero profesional junto con un Excel listo para trabajar.</p>
       </div>
       <div class="privacy-note">
@@ -103,6 +103,19 @@
         </div>
       </article>
 
+      <article class="panel input-panel planned-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="section-kicker">PLANIFICACIÓN</span>
+            <h3>Actividades a realizar a la Fecha</h3>
+          </div>
+          <span id="plannedStatus" class="status-pill neutral">Requerido</span>
+        </div>
+        <label class="field-label" for="plannedActivities">Cantidad planificada entre 0 y 100</label>
+        <input id="plannedActivities" class="number-field" type="number" min="0" max="100" step="1" inputmode="numeric" value="0">
+        <p class="field-help">Este valor se usará para calcular entregas esperadas y niveles de riesgo.</p>
+      </article>
+
       <aside class="panel action-panel">
         <div>
           <span class="section-kicker">PROCESAMIENTO</span>
@@ -133,10 +146,17 @@
             <input id="studentSearch" type="search" placeholder="Buscar estudiante..." disabled>
           </label>
           <select id="riskFilter" aria-label="Filtrar por estado" disabled>
-            <option value="all">Todos los estados</option>
-            <option value="risk">En riesgo</option>
-            <option value="active">Activos</option>
-            <option value="no-access">Nunca ingresaron</option>
+            <option value="all">Todos los riesgos</option>
+            <option value="low">Riesgo Bajo</option>
+            <option value="medium">Riesgo Medio</option>
+            <option value="high">Riesgo Alto</option>
+          </select>
+          <select id="averageFilter" aria-label="Filtrar por promedio" disabled>
+            <option value="all">Todos los promedios</option>
+            <option value="none">Sin promedio</option>
+            <option value="below4">Menor a 4</option>
+            <option value="between4and7">Entre 4 y 6,99</option>
+            <option value="sevenOrMore">7 o más</option>
           </select>
         </div>
       </div>
@@ -152,15 +172,35 @@
           <div><strong id="metricActivities">0</strong><span>Actividades</span></div>
           <small id="metricActivitiesNote">Esperando datos</small>
         </article>
+        <article class="metric-card accent-blue">
+          <div class="metric-icon">#</div>
+          <div><strong id="metricPlanned">0</strong><span>Actividades a la fecha</span></div>
+          <small id="metricPlannedNote">Esperando datos</small>
+        </article>
         <article class="metric-card accent-green">
           <div class="metric-icon">↗</div>
           <div><strong id="metricDelivery">0%</strong><span>Nivel de entrega</span></div>
           <small id="metricDeliveryNote">Esperando datos</small>
         </article>
+        <article class="metric-card accent-average">
+          <div class="metric-icon">∅</div>
+          <div><strong id="metricAverage">0</strong><span>Promedio del Curso</span></div>
+          <small id="metricAverageNote">Solo notas numéricas</small>
+        </article>
         <article class="metric-card accent-red">
           <div class="metric-icon">!</div>
-          <div><strong id="metricRisk">0</strong><span>En riesgo</span></div>
-          <small id="metricRiskNote">Esperando datos</small>
+          <div><strong id="metricRiskLow">0</strong><span>Riesgo Bajo</span></div>
+          <small>Más del 70% de entregas</small>
+        </article>
+        <article class="metric-card accent-yellow">
+          <div class="metric-icon">!</div>
+          <div><strong id="metricRiskMedium">0</strong><span>Riesgo Medio</span></div>
+          <small>Entre 36% y 70%</small>
+        </article>
+        <article class="metric-card accent-cyan">
+          <div class="metric-icon">!</div>
+          <div><strong id="metricRiskHigh">0</strong><span>Riesgo Alto</span></div>
+          <small>Hasta 35% o sin ingreso</small>
         </article>
       </div>
 
@@ -197,7 +237,7 @@
     </section>
 
     <footer>
-      <span>Calificador de Moodle · v1</span>
+      <span>Calificador de Moodle · v1 · Creado por Ing. Emanuel Bombina</span>
       <span>Procesamiento local y privado</span>
     </footer>
   </main>

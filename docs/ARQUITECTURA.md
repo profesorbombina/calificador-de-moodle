@@ -25,18 +25,21 @@ Mantener una aplicación estática, fácil de publicar y capaz de procesar infor
 3. Identifica estudiantes y actividades.
 4. Interpreta participantes y cruza los datos por correo.
 5. Calcula indicadores y señales de riesgo.
-6. Renderiza el dashboard.
-7. Genera el informe Excel.
+6. Calcula entregas esperadas según las actividades planificadas a la fecha.
+7. Renderiza el dashboard.
+8. Genera el informe Excel.
 
 ## Criterio de riesgo
 
 Un estudiante queda marcado:
 
-- **Nunca ingresó**: el texto de Participantes informa `Nunca`.
-- **En riesgo**: entregó como máximo el 35% de las actividades, con un mínimo de una.
-- **Activo**: no cumple las condiciones anteriores.
+- **Riesgo Alto**: entregó hasta el 35% de las actividades planificadas o nunca ingresó.
+- **Riesgo Medio**: entregó entre el 36% y el 70%.
+- **Riesgo Bajo**: entregó más del 70%.
 
 Este criterio está aislado dentro de `buildAnalysis` para facilitar cambios futuros.
+
+Las escalas textuales cuentan como entregas. El promedio del curso y los promedios individuales utilizan exclusivamente calificaciones numéricas.
 
 ## Dependencias
 
@@ -50,4 +53,3 @@ Este criterio está aislado dentro de `buildAnalysis` para facilitar cambios fut
 - Detección de escalas de calificación y notas aprobatorias.
 - Persistencia de análisis históricos.
 - Pruebas automatizadas con muestras anonimizadas de Moodle.
-

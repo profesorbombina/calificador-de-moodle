@@ -12,7 +12,9 @@ La versión 1 funciona completamente en el navegador: los archivos locales no se
 - Cruza estudiantes por correo electrónico.
 - Detecta actividades cuyos encabezados incluyen Foro, Cuestionario o Tarea.
 - Calcula entregas, promedios, nivel de participación y señales de riesgo.
-- Permite buscar y filtrar estudiantes.
+- Cuenta entregas con escalas numéricas y textuales, por ejemplo Aprobado/Desaprobado.
+- Calcula las métricas según las actividades planificadas a la fecha.
+- Permite buscar y filtrar estudiantes por nivel de riesgo y promedio.
 - Descarga un informe `.xlsx` con hojas Dashboard, Calificaciones y Seguimiento.
 
 ## Uso
@@ -20,8 +22,9 @@ La versión 1 funciona completamente en el navegador: los archivos locales no se
 1. Abrí `index.html` en un navegador moderno.
 2. Cargá la exportación del calificador o una URL pública de Google Sheets.
 3. Opcionalmente, pegá el listado copiado desde Participantes.
-4. Presioná **Analizar curso**.
-5. Revisá el dashboard y descargá el informe.
+4. Indicá la cantidad de actividades a realizar a la fecha.
+5. Presioná **Analizar curso**.
+6. Revisá el dashboard y descargá el informe.
 
 ## Publicación en GitHub Pages
 
@@ -62,7 +65,8 @@ calificador-de-moodle-v1/
 
 ## Limitaciones conocidas de la v1
 
-- La clasificación de riesgo es orientativa: considera baja cantidad de entregas y falta de acceso.
+- La clasificación de riesgo es orientativa: Riesgo Alto hasta 35%, Riesgo Medio entre 36% y 70%, y Riesgo Bajo por encima del 70% de entregas. Nunca haber ingresado implica Riesgo Alto.
+- El promedio del curso considera únicamente calificaciones numéricas.
 - La detección automática depende de los nombres de columnas exportados por Moodle.
 - Las URLs privadas de Google Sheets no pueden abrirse sin integrar autenticación.
 - El informe descargado es un libro nuevo y no conserva formatos personalizados del archivo original.

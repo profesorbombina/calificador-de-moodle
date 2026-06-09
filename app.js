@@ -20,6 +20,8 @@ const elements = {
   participantText: document.querySelector("#participantText"),
   participantHint: document.querySelector("#participantHint"),
   clearParticipantsBtn: document.querySelector("#clearParticipantsBtn"),
+  plannedActivities: document.querySelector("#plannedActivities"),
+  plannedStatus: document.querySelector("#plannedStatus"),
   sourceStatus: document.querySelector("#sourceStatus"),
   participantStatus: document.querySelector("#participantStatus"),
   analyzeBtn: document.querySelector("#analyzeBtn"),
@@ -29,6 +31,7 @@ const elements = {
   dashboard: document.querySelector("#dashboard"),
   studentSearch: document.querySelector("#studentSearch"),
   riskFilter: document.querySelector("#riskFilter"),
+  averageFilter: document.querySelector("#averageFilter"),
   studentTableBody: document.querySelector("#studentTableBody"),
   tableCount: document.querySelector("#tableCount"),
   activityChart: document.querySelector("#activityChart"),
@@ -40,10 +43,15 @@ const metricElements = {
   studentsNote: document.querySelector("#metricStudentsNote"),
   activities: document.querySelector("#metricActivities"),
   activitiesNote: document.querySelector("#metricActivitiesNote"),
+  planned: document.querySelector("#metricPlanned"),
+  plannedNote: document.querySelector("#metricPlannedNote"),
   delivery: document.querySelector("#metricDelivery"),
   deliveryNote: document.querySelector("#metricDeliveryNote"),
-  risk: document.querySelector("#metricRisk"),
-  riskNote: document.querySelector("#metricRiskNote")
+  average: document.querySelector("#metricAverage"),
+  averageNote: document.querySelector("#metricAverageNote"),
+  riskLow: document.querySelector("#metricRiskLow"),
+  riskMedium: document.querySelector("#metricRiskMedium"),
+  riskHigh: document.querySelector("#metricRiskHigh")
 };
 
 const ACCEPTED_EXTENSIONS = /\.(xlsx|xls|ods|csv)$/i;
@@ -57,6 +65,8 @@ elements.resetBtn.addEventListener("click", resetApplication);
 elements.clearParticipantsBtn.addEventListener("click", clearParticipants);
 elements.studentSearch.addEventListener("input", applyStudentFilters);
 elements.riskFilter.addEventListener("change", applyStudentFilters);
+elements.averageFilter.addEventListener("change", applyStudentFilters);
+elements.plannedActivities.addEventListener("input", validatePlannedActivities);
 elements.fileTab.addEventListener("click", () => selectSourceTab("file"));
 elements.urlTab.addEventListener("click", () => selectSourceTab("url"));
 elements.participantText.addEventListener("input", updateParticipantStatus);
@@ -99,7 +109,7 @@ async function selectLocalFile(file) {
     elements.fileName.textContent = file.name;
     setStatus("source", "Archivo listo", "ok");
     setProcessStatus("Fuente cargada. Ya podés analizar el curso.", "ok");
-    elements.analyzeBtn.disabled = false;
+    validatePlannedActivities();
   } catch (error) {
     setProcessStatus(`No se pudo leer el archivo: ${error.message}`, "error");
   }
@@ -122,7 +132,7 @@ async function loadGoogleSheet() {
     state.sourceName = "google-sheets-moodle.xlsx";
     setStatus("source", "Google Sheets listo", "ok");
     setProcessStatus("Hoja cargada. Ya podés analizar el curso.", "ok");
-    elements.analyzeBtn.disabled = false;
+    validatePlannedActivities();
   } catch (error) {
     setStatus("source", "No disponible", "error");
     setProcessStatus("No se pudo abrir la hoja. Verificá que sea pública o accesible mediante enlace.", "error");
@@ -151,6 +161,14 @@ function updateParticipantStatus() {
     : "No se detectaron estudiantes. Podés analizar igualmente las calificaciones.";
 }
 
+function validatePlannedActivities() {
+  const value = Number(elements.plannedActivities.value);
+  const valid = Number.isInteger(value) && value >= 0 && value <= 100;
+  setStatusElement(elements.plannedStatus, valid ? `${value} actividades` : "Valor inválido", valid ? "ok" : "error");
+  elements.analyzeBtn.disabled = !(state.sourceData && valid);
+  return valid ? value : null;
+}
+
 function clearParticipants() {
   elements.participantText.value = "";
   updateParticipantStatus();
@@ -158,6 +176,11 @@ function clearParticipants() {
 
 async function analyzeCourse() {
   if (!state.sourceData) return;
+  const plannedActivities = validatePlannedActivities();
+  if (plannedActivities === null) {
+    setProcessStatus("Ingresá un número entero entre 0 y 100 para las actividades a la fecha.", "error");
+    return;
+  }
 
   try {
     elements.analyzeBtn.disabled = true;
@@ -170,12 +193,13 @@ async function analyzeCourse() {
     const gradeSheetName = detectGradeSheet(workbook);
     const gradeRows = XLSX.utils.sheet_to_json(workbook.Sheets[gradeSheetName], { header: 1, defval: "", raw: true });
     const participants = parseMoodleParticipants(elements.participantText.value);
-    state.analysis = buildAnalysis(gradeRows, participants, gradeSheetName);
+    state.analysis = buildAnalysis(gradeRows, participants, gradeSheetName, plannedActivities);
 
     renderDashboard(state.analysis);
     elements.downloadBtn.disabled = false;
     elements.studentSearch.disabled = false;
     elements.riskFilter.disabled = false;
+    elements.averageFilter.disabled = false;
     setProcessStatus(`Análisis listo: ${state.analysis.students.length} estudiantes y ${state.analysis.activities.length} actividades.`, "ok");
     elements.dashboard.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (error) {
@@ -197,7 +221,7 @@ function detectGradeSheet(workbook) {
   return workbook.SheetNames[0];
 }
 
-function buildAnalysis(rows, participants, sheetName) {
+function buildAnalysis(rows, participants, sheetName, plannedActivities = 0) {
   if (rows.length < 2) throw new Error("La hoja de calificaciones no contiene datos suficientes");
 
   const headers = rows[0].map(value => String(value || "").trim());
@@ -227,7 +251,8 @@ function buildAnalysis(rows, participants, sheetName) {
     name: cleanActivityName(headers[index]),
     sourceIndex: index,
     delivered: 0,
-    grades: []
+    grades: [],
+    textualDeliveries: 0
   }));
 
   const students = [];
@@ -236,20 +261,23 @@ function buildAnalysis(rows, participants, sheetName) {
     const fullName = [row[indexes.firstName], row[indexes.lastName]].filter(Boolean).join(" ").trim();
     if (!email && !fullName) continue;
 
-    const grades = activityIndexes.map((index, activityPosition) => {
-      const grade = parseGrade(row[index]);
-      if (grade !== null) {
+    const submissions = activityIndexes.map((index, activityPosition) => {
+      const submission = parseSubmission(row[index]);
+      if (submission.delivered) {
         activities[activityPosition].delivered += 1;
-        activities[activityPosition].grades.push(grade);
+        if (submission.numeric !== null) activities[activityPosition].grades.push(submission.numeric);
+        else activities[activityPosition].textualDeliveries += 1;
       }
-      return grade;
+      return submission;
     });
-    const delivered = grades.filter(grade => grade !== null).length;
-    const average = averageOf(grades.filter(grade => grade !== null));
+    const delivered = submissions.filter(submission => submission.delivered).length;
+    const numericGrades = submissions.map(submission => submission.numeric).filter(grade => grade !== null);
+    const average = averageOf(numericGrades);
     const participant = participantMap.get(email.toLowerCase()) || {};
     const noAccess = normalizeText(participant.access) === "nunca";
-    const riskThreshold = Math.max(1, Math.floor(activityIndexes.length * 0.35));
-    const risk = delivered <= riskThreshold || noAccess;
+    const expectedActivities = plannedActivities;
+    const deliveryRate = expectedActivities > 0 ? Math.min(delivered / expectedActivities, 1) : 0;
+    const risk = classifyRisk(deliveryRate, noAccess, expectedActivities);
 
     students.push({
       name: participant.name || fullName || email,
@@ -257,35 +285,44 @@ function buildAnalysis(rows, participants, sheetName) {
       id: indexes.id >= 0 ? row[indexes.id] : "",
       group: participant.groups || "Sin grupo",
       access: participant.access || "Sin dato",
-      grades,
+      grades: submissions.map(submission => submission.display),
       delivered,
       average,
-      status: noAccess ? "no-access" : risk ? "risk" : "active"
+      deliveryRate,
+      status: risk
     });
   }
 
   students.sort((a, b) => {
-    const priority = { "no-access": 0, risk: 1, active: 2 };
+    const priority = { high: 0, medium: 1, low: 2 };
     return priority[a.status] - priority[b.status] || a.name.localeCompare(b.name, "es");
   });
 
-  const totalPossible = students.length * activities.length;
+  const totalPossible = students.length * plannedActivities;
   const totalDelivered = students.reduce((sum, student) => sum + student.delivered, 0);
-  const riskCount = students.filter(student => student.status !== "active").length;
-  const noAccessCount = students.filter(student => student.status === "no-access").length;
+  const riskLow = students.filter(student => student.status === "low").length;
+  const riskMedium = students.filter(student => student.status === "medium").length;
+  const riskHigh = students.filter(student => student.status === "high").length;
+  const noAccessCount = students.filter(student => normalizeText(student.access) === "nunca").length;
   const matchedParticipants = students.filter(student => participantMap.has(student.email.toLowerCase())).length;
+  // El promedio del curso pondera cada calificación numérica registrada por igual.
+  const courseAverage = averageOf(activities.flatMap(activity => activity.grades));
 
   return {
     generatedAt: new Date(),
     sourceName: state.sourceName,
     sourceSheet: sheetName,
+    plannedActivities,
     activities,
     students,
     totals: {
       delivered: totalDelivered,
       possible: totalPossible,
-      deliveryRate: totalPossible ? totalDelivered / totalPossible : 0,
-      risk: riskCount,
+      deliveryRate: totalPossible ? Math.min(totalDelivered / totalPossible, 1) : 0,
+      average: courseAverage,
+      riskLow,
+      riskMedium,
+      riskHigh,
       noAccess: noAccessCount,
       matchedParticipants
     }
@@ -297,11 +334,16 @@ function renderDashboard(analysis) {
   metricElements.students.textContent = students.length;
   metricElements.studentsNote.textContent = `${totals.matchedParticipants} cruzados con Participantes`;
   metricElements.activities.textContent = activities.length;
-  metricElements.activitiesNote.textContent = `${totals.delivered} entregas registradas`;
+  metricElements.activitiesNote.textContent = `${activities.filter(activity => activity.textualDeliveries).length} con escala textual`;
+  metricElements.planned.textContent = analysis.plannedActivities;
+  metricElements.plannedNote.textContent = `${totals.possible} entregas esperadas`;
   metricElements.delivery.textContent = formatPercent(totals.deliveryRate);
   metricElements.deliveryNote.textContent = `${totals.delivered} de ${totals.possible} esperadas`;
-  metricElements.risk.textContent = totals.risk;
-  metricElements.riskNote.textContent = `${totals.noAccess} nunca ingresaron`;
+  metricElements.average.textContent = totals.average === null ? "—" : totals.average.toFixed(2);
+  metricElements.averageNote.textContent = "Solo calificaciones numéricas";
+  metricElements.riskLow.textContent = totals.riskLow;
+  metricElements.riskMedium.textContent = totals.riskMedium;
+  metricElements.riskHigh.textContent = totals.riskHigh;
 
   renderActivityChart(activities, students.length);
   renderAlerts(analysis);
@@ -316,7 +358,7 @@ function renderActivityChart(activities, studentCount) {
       <div class="activity-row">
         <span class="activity-name" title="${escapeHtml(activity.name)}">${escapeHtml(activity.name)}</span>
         <div class="bar-track"><div class="bar-fill" style="width:${Math.round(rate * 100)}%"></div></div>
-        <span class="activity-value">${formatPercent(rate)}</span>
+        <span class="activity-value">${activity.delivered} · ${formatPercent(rate)}</span>
       </div>`;
   }).join("");
 }
@@ -328,7 +370,7 @@ function renderAlerts(analysis) {
 
   if (totals.noAccess) alerts.push(["danger", "!", `${totals.noAccess} sin ingreso`, "Conviene contactar primero a quienes nunca accedieron al aula."]);
   if (weakActivities.length) alerts.push(["warning", "↓", `${weakActivities.length} actividades con baja entrega`, "Tienen menos del 50% de participación registrada."]);
-  if (totals.risk) alerts.push(["danger", "!", `${totals.risk} estudiantes requieren atención`, "La señal combina baja entrega y falta de acceso."]);
+  if (totals.riskHigh) alerts.push(["danger", "!", `${totals.riskHigh} estudiantes en Riesgo Alto`, "La señal combina hasta 35% de entregas o falta de acceso."]);
   if (totals.deliveryRate >= 0.75) alerts.push(["success", "✓", "Buen nivel de participación", `El curso alcanza ${formatPercent(totals.deliveryRate)} de entregas.`]);
   if (!alerts.length) alerts.push(["success", "✓", "Sin alertas críticas", "El análisis no encontró señales prioritarias."]);
 
@@ -344,10 +386,12 @@ function applyStudentFilters() {
   if (!state.analysis) return;
   const query = normalizeText(elements.studentSearch.value);
   const status = elements.riskFilter.value;
+  const averageFilter = elements.averageFilter.value;
   state.filteredStudents = state.analysis.students.filter(student => {
     const matchesText = !query || normalizeText(`${student.name} ${student.email} ${student.group}`).includes(query);
     const matchesStatus = status === "all" || student.status === status;
-    return matchesText && matchesStatus;
+    const matchesAverage = averageMatches(student.average, averageFilter);
+    return matchesText && matchesStatus && matchesAverage;
   });
   renderStudentTable(state.filteredStudents, state.analysis.activities.length);
 }
@@ -372,9 +416,9 @@ function renderStudentTable(students, activityCount) {
 
 function statusBadge(status) {
   const config = {
-    active: ["Activo", "badge-active"],
-    risk: ["En riesgo", "badge-risk"],
-    "no-access": ["Nunca ingresó", "badge-no-access"]
+    low: ["Riesgo Bajo", "badge-low"],
+    medium: ["Riesgo Medio", "badge-medium"],
+    high: ["Riesgo Alto", "badge-high"]
   };
   const [label, className] = config[status];
   return `<span class="badge ${className}">${label}</span>`;
@@ -397,8 +441,10 @@ function buildReportWorkbook(analysis) {
     ["INDICADOR", "VALOR", "DETALLE", ""],
     ["Estudiantes", analysis.students.length, "Cruce con Participantes", analysis.totals.matchedParticipants],
     ["Actividades", analysis.activities.length, "Entregas registradas", analysis.totals.delivered],
-    ["Nivel de entrega", analysis.totals.deliveryRate, "Entregas esperadas", analysis.totals.possible],
-    ["Estudiantes en riesgo", analysis.totals.risk, "Nunca ingresaron", analysis.totals.noAccess],
+    ["Actividades a la fecha", analysis.plannedActivities, "Entregas esperadas", analysis.totals.possible],
+    ["Nivel de entrega", analysis.totals.deliveryRate, "Promedio del Curso", analysis.totals.average ?? ""],
+    ["Riesgo Bajo", analysis.totals.riskLow, "Riesgo Medio", analysis.totals.riskMedium],
+    ["Riesgo Alto", analysis.totals.riskHigh, "Nunca ingresaron", analysis.totals.noAccess],
     [],
     ["ACTIVIDAD", "ENTREGAS", "PARTICIPACIÓN", "PROMEDIO"],
     ...analysis.activities.map(activity => [
@@ -445,14 +491,14 @@ function styleDashboardSheet(sheet, rowCount) {
       sheet[ref].s = { font: { name: "Aptos", sz: 10, color: { rgb: "FF163238" } }, alignment: { vertical: "center", wrapText: true }, border };
     }
   }
-  ["A1", "A4", "A10"].forEach(ref => {
+  ["A1", "A4", "A12"].forEach(ref => {
     sheet[ref].s.fill = { fgColor: { rgb: "FF087C68" } };
     sheet[ref].s.font = { name: "Aptos Display", bold: true, sz: ref === "A1" ? 18 : 11, color: { rgb: "FFFFFFFF" } };
   });
   sheet["!merges"] = [XLSX.utils.decode_range("A1:D1"), XLSX.utils.decode_range("A4:D4")];
   sheet["!cols"] = [{ wch:28 }, { wch:18 }, { wch:28 }, { wch:18 }];
-  sheet["C7"].z = "0.00%";
-  for (let row = 11; row <= rowCount; row++) sheet[`C${row}`].z = "0.00%";
+  sheet["B8"].z = "0.00%";
+  for (let row = 13; row <= rowCount; row++) sheet[`C${row}`].z = "0.00%";
 }
 
 function styleDataSheet(sheet, colCount, rowCount) {
@@ -530,12 +576,33 @@ function cleanActivityName(value) {
     .trim();
 }
 
-function parseGrade(value) {
-  if (typeof value === "number" && Number.isFinite(value)) return value;
+function parseSubmission(value) {
+  if (typeof value === "number" && Number.isFinite(value)) return { delivered: true, numeric: value, display: value };
   const text = String(value ?? "").trim();
-  if (!text || text === "-") return null;
+  if (!text || text === "-") return { delivered: false, numeric: null, display: "-" };
   const parsed = Number(text.replace(",", "."));
-  return Number.isFinite(parsed) ? parsed : null;
+  return {
+    delivered: true,
+    numeric: Number.isFinite(parsed) ? parsed : null,
+    display: Number.isFinite(parsed) ? parsed : text
+  };
+}
+
+function classifyRisk(deliveryRate, noAccess, expectedActivities) {
+  if (noAccess) return "high";
+  if (expectedActivities === 0) return "low";
+  if (deliveryRate <= 0.35) return "high";
+  if (deliveryRate <= 0.70) return "medium";
+  return "low";
+}
+
+function averageMatches(average, filter) {
+  if (filter === "all") return true;
+  if (filter === "none") return average === null;
+  if (average === null) return false;
+  if (filter === "below4") return average < 4;
+  if (filter === "between4and7") return average >= 4 && average < 7;
+  return average >= 7;
 }
 
 function averageOf(values) {
@@ -544,7 +611,7 @@ function averageOf(values) {
 }
 
 function statusLabel(status) {
-  return status === "active" ? "Activo" : status === "no-access" ? "Nunca ingresó" : "En riesgo";
+  return status === "low" ? "Riesgo Bajo" : status === "medium" ? "Riesgo Medio" : "Riesgo Alto";
 }
 
 function normalizeText(value) {
@@ -571,6 +638,10 @@ function columnLetter(number) {
 
 function setStatus(target, message, type) {
   const element = target === "source" ? elements.sourceStatus : elements.participantStatus;
+  setStatusElement(element, message, type);
+}
+
+function setStatusElement(element, message, type) {
   element.textContent = message;
   element.className = `status-pill ${type}`;
 }
@@ -598,27 +669,38 @@ function resetApplication() {
   elements.fileName.textContent = "Ningún archivo seleccionado";
   elements.sheetUrl.value = "";
   elements.participantText.value = "";
+  elements.plannedActivities.value = "0";
   elements.studentSearch.value = "";
   elements.riskFilter.value = "all";
+  elements.averageFilter.value = "all";
   elements.analyzeBtn.disabled = true;
   elements.downloadBtn.disabled = true;
   elements.studentSearch.disabled = true;
   elements.riskFilter.disabled = true;
+  elements.averageFilter.disabled = true;
   setStatus("source", "Pendiente", "neutral");
   updateParticipantStatus();
   setProcessStatus("Cargá un archivo para comenzar.");
   metricElements.students.textContent = "0";
   metricElements.activities.textContent = "0";
+  metricElements.planned.textContent = "0";
   metricElements.delivery.textContent = "0%";
-  metricElements.risk.textContent = "0";
+  metricElements.average.textContent = "0";
+  metricElements.riskLow.textContent = "0";
+  metricElements.riskMedium.textContent = "0";
+  metricElements.riskHigh.textContent = "0";
   metricElements.studentsNote.textContent = "Esperando datos";
   metricElements.activitiesNote.textContent = "Esperando datos";
+  metricElements.plannedNote.textContent = "Esperando datos";
   metricElements.deliveryNote.textContent = "Esperando datos";
-  metricElements.riskNote.textContent = "Esperando datos";
+  metricElements.averageNote.textContent = "Solo notas numéricas";
   elements.activityChart.className = "activity-chart empty-state";
   elements.activityChart.textContent = "Los indicadores aparecerán después del análisis.";
   elements.alertsList.className = "alerts-list empty-state";
   elements.alertsList.textContent = "Todavía no hay señales para mostrar.";
   elements.studentTableBody.innerHTML = '<tr><td colspan="7" class="table-empty">Cargá información para construir el seguimiento.</td></tr>';
   elements.tableCount.textContent = "0 registros";
+  validatePlannedActivities();
 }
+
+validatePlannedActivities();
