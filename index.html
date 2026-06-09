@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Dashboard para analizar y mejorar exportaciones del calificador de Moodle.">
+  <title>Calificador de Moodle</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 7.5 12 3l8 4.5-8 4.5-8-4.5Zm2.5 3.7V16L12 19l5.5-3v-4.8M20 8v6"/></svg>
+        </div>
+        <div>
+          <p class="eyebrow">ANALIZAR · ORGANIZAR · ACOMPAÑAR</p>
+          <h1>Calificador <span>de Moodle</span></h1>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button class="button button-ghost" id="resetBtn" type="button">
+          <span aria-hidden="true">↻</span> Reiniciar
+        </button>
+        <button class="button button-primary" id="downloadBtn" type="button" disabled>
+          <span aria-hidden="true">↓</span> Descargar informe
+        </button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div>
+        <span class="version-pill">VERSIÓN 1 · TODO EN UNA PANTALLA</span>
+        <h2>Convertí datos de Moodle en decisiones claras.</h2>
+        <p>Cargá las calificaciones, pegá los participantes y obtené un tablero profesional junto con un Excel listo para trabajar.</p>
+      </div>
+      <div class="privacy-note">
+        <span class="privacy-icon" aria-hidden="true">✓</span>
+        <div>
+          <strong>Procesamiento privado</strong>
+          <span>Los archivos se procesan en tu navegador.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="workspace" aria-label="Carga y preparación de datos">
+      <article class="panel input-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="section-kicker">FUENTE PRINCIPAL</span>
+            <h3>Calificaciones</h3>
+          </div>
+          <span id="sourceStatus" class="status-pill neutral">Pendiente</span>
+        </div>
+
+        <div class="source-tabs" role="tablist" aria-label="Origen de calificaciones">
+          <button class="source-tab active" id="fileTab" type="button" role="tab" aria-selected="true">Archivo local</button>
+          <button class="source-tab" id="urlTab" type="button" role="tab" aria-selected="false">Google Sheets</button>
+        </div>
+
+        <div id="fileSource" class="source-content">
+          <label class="dropzone" id="dropzone" for="fileInput">
+            <input id="fileInput" type="file" accept=".xlsx,.xls,.ods,.csv">
+            <span class="drop-icon" aria-hidden="true">↑</span>
+            <strong>Arrastrá o seleccioná tu archivo</strong>
+            <span>Formatos permitidos: XLSX, XLS, ODS y CSV</span>
+            <span class="file-chip" id="fileName">Ningún archivo seleccionado</span>
+          </label>
+        </div>
+
+        <div id="urlSource" class="source-content" hidden>
+          <label class="field-label" for="sheetUrl">URL pública de Google Sheets</label>
+          <div class="inline-field">
+            <input id="sheetUrl" type="url" placeholder="https://docs.google.com/spreadsheets/d/...">
+            <button class="icon-button" id="loadUrlBtn" type="button" aria-label="Cargar Google Sheets">→</button>
+          </div>
+          <p class="field-help">La hoja debe estar publicada o permitir acceso mediante enlace.</p>
+        </div>
+      </article>
+
+      <article class="panel input-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="section-kicker">CONTEXTO DEL CURSO</span>
+            <h3>Participantes</h3>
+          </div>
+          <span id="participantStatus" class="status-pill neutral">Opcional</span>
+        </div>
+        <label class="field-label" for="participantText">Listado copiado desde Moodle</label>
+        <textarea id="participantText" placeholder="Pegá aquí el contenido de la pantalla Participantes de Moodle..."></textarea>
+        <div class="textarea-footer">
+          <span id="participantHint">Se tomarán únicamente los registros con rol Estudiante.</span>
+          <button class="text-button" id="clearParticipantsBtn" type="button">Limpiar texto</button>
+        </div>
+      </article>
+
+      <aside class="panel action-panel">
+        <div>
+          <span class="section-kicker">PROCESAMIENTO</span>
+          <h3>Preparar dashboard</h3>
+          <p>La aplicación detectará estudiantes, actividades, entregas, promedios y señales de riesgo.</p>
+        </div>
+        <ul class="check-list">
+          <li><span>✓</span> Limpieza automática</li>
+          <li><span>✓</span> Cruce por correo</li>
+          <li><span>✓</span> Informe Excel mejorado</li>
+        </ul>
+        <button class="button button-primary button-large" id="analyzeBtn" type="button" disabled>
+          Analizar curso <span aria-hidden="true">→</span>
+        </button>
+        <div class="process-status" id="processStatus" role="status">Cargá un archivo para comenzar.</div>
+      </aside>
+    </section>
+
+    <section class="dashboard" id="dashboard" aria-live="polite">
+      <div class="dashboard-heading">
+        <div>
+          <span class="section-kicker">PANORAMA GENERAL</span>
+          <h2>Dashboard del curso</h2>
+        </div>
+        <div class="dashboard-tools">
+          <label class="search-box">
+            <span aria-hidden="true">⌕</span>
+            <input id="studentSearch" type="search" placeholder="Buscar estudiante..." disabled>
+          </label>
+          <select id="riskFilter" aria-label="Filtrar por estado" disabled>
+            <option value="all">Todos los estados</option>
+            <option value="risk">En riesgo</option>
+            <option value="active">Activos</option>
+            <option value="no-access">Nunca ingresaron</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="metric-grid">
+        <article class="metric-card accent-cyan">
+          <div class="metric-icon">◎</div>
+          <div><strong id="metricStudents">0</strong><span>Estudiantes</span></div>
+          <small id="metricStudentsNote">Esperando datos</small>
+        </article>
+        <article class="metric-card accent-violet">
+          <div class="metric-icon">▦</div>
+          <div><strong id="metricActivities">0</strong><span>Actividades</span></div>
+          <small id="metricActivitiesNote">Esperando datos</small>
+        </article>
+        <article class="metric-card accent-green">
+          <div class="metric-icon">↗</div>
+          <div><strong id="metricDelivery">0%</strong><span>Nivel de entrega</span></div>
+          <small id="metricDeliveryNote">Esperando datos</small>
+        </article>
+        <article class="metric-card accent-red">
+          <div class="metric-icon">!</div>
+          <div><strong id="metricRisk">0</strong><span>En riesgo</span></div>
+          <small id="metricRiskNote">Esperando datos</small>
+        </article>
+      </div>
+
+      <div class="insight-grid">
+        <article class="panel insight-panel">
+          <div class="panel-heading compact">
+            <div><span class="section-kicker">ACTIVIDADES</span><h3>Participación por actividad</h3></div>
+          </div>
+          <div id="activityChart" class="activity-chart empty-state">Los indicadores aparecerán después del análisis.</div>
+        </article>
+
+        <article class="panel insight-panel">
+          <div class="panel-heading compact">
+            <div><span class="section-kicker">DIAGNÓSTICO</span><h3>Señales prioritarias</h3></div>
+          </div>
+          <div id="alertsList" class="alerts-list empty-state">Todavía no hay señales para mostrar.</div>
+        </article>
+      </div>
+
+      <article class="panel table-panel">
+        <div class="panel-heading compact">
+          <div><span class="section-kicker">DETALLE</span><h3>Seguimiento de estudiantes</h3></div>
+          <span class="table-count" id="tableCount">0 registros</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Estudiante</th><th>Correo</th><th>Grupo</th><th>Entregas</th><th>Promedio</th><th>Último acceso</th><th>Estado</th></tr></thead>
+            <tbody id="studentTableBody">
+              <tr><td colspan="7" class="table-empty">Cargá información para construir el seguimiento.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <footer>
+      <span>Calificador de Moodle · v1</span>
+      <span>Procesamiento local y privado</span>
+    </footer>
+  </main>
+</body>
+</html>

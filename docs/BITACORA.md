@@ -1,0 +1,25 @@
+# Bitácora
+
+## Versión 1
+
+Fecha: 9 de junio de 2026
+
+### Implementado
+
+- Unificación de carga, participantes y dashboard en una pantalla.
+- Diseño oscuro moderno con acentos verdes y turquesa.
+- Importación local de XLSX, XLS, ODS y CSV.
+- Importación de Google Sheets público.
+- Interpretación del listado de Participantes.
+- Cruce por correo electrónico.
+- Métricas de estudiantes, actividades, entregas y riesgo.
+- Alertas prioritarias, filtros y búsqueda.
+- Exportación de informe Excel con tres hojas.
+- Documentación de uso, arquitectura y limitaciones.
+
+### Decisiones
+
+- El procesamiento se mantiene local para proteger los datos de estudiantes.
+- La URL de Google Sheets usa la exportación oficial a XLSX y requiere acceso público.
+- La v1 genera un libro nuevo para asegurar un informe consistente y profesional.
+
