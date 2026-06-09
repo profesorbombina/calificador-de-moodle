@@ -46,6 +46,16 @@ Las escalas textuales cuentan como entregas. El promedio del curso y los promedi
 - `xlsx-js-style`: lectura y generación de planillas, cargada desde CDN.
 - Google Fonts: tipografía Manrope.
 
+## Sincronización del proyecto embebible
+
+El proyecto principal es la única fuente de verdad. `tools/build-embeddable.js` combina el HTML, CSS y JavaScript en un solo archivo y lo escribe en el proyecto hermano `calificador-de-moodle-embebible`.
+
+No deben realizarse cambios funcionales directamente sobre el HTML generado. Después de modificar el proyecto principal se ejecuta:
+
+```powershell
+node tools/build-embeddable.js
+```
+
 ## Próximas extensiones recomendadas
 
 - Configuración editable del umbral de riesgo.

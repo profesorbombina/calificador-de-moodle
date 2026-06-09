@@ -32,3 +32,4 @@ Fecha: 9 de junio de 2026
 - Niveles y filtros de Riesgo Bajo, Medio y Alto.
 - Filtro por promedio.
 - Cantidad de entregas visible en el gráfico de actividades.
+- Generador automático del proyecto embebible para Google Sites.

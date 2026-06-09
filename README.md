@@ -35,12 +35,23 @@ El proyecto no requiere compilación ni servidor.
 3. Seleccioná la rama principal y la carpeta raíz.
 4. Guardá la configuración.
 
+## Proyecto embebible
+
+El archivo único para Google Sites se genera desde este proyecto para evitar mantener dos códigos diferentes:
+
+```powershell
+node tools/build-embeddable.js
+```
+
+El comando actualiza `../calificador-de-moodle-embebible/index.html`. Cada modificación realizada en `index.html`, `styles.css` o `app.js` debe finalizar ejecutando ese generador.
+
 ## Verificación técnica
 
 La prueba de humo valida la interpretación de Participantes y los cálculos principales:
 
 ```powershell
 node tests/smoke-test.js
+node tests/embeddable-sync-test.js
 ```
 
 ## Privacidad
@@ -56,6 +67,9 @@ calificador-de-moodle-v1/
 ├── index.html
 ├── styles.css
 ├── app.js
+├── tools/
+│   ├── build-embeddable.js
+│   └── sync-embeddable.ps1
 ├── tests/
 │   └── smoke-test.js
 └── docs/
