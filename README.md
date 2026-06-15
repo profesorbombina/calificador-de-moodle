@@ -4,6 +4,13 @@ Aplicación web para transformar exportaciones del calificador de Moodle en un d
 
 La versión 1 funciona completamente en el navegador: los archivos locales no se envían a ningún servidor.
 
+## Estado del proyecto
+
+- La versión estable actual está preservada en la etiqueta `v1.0.0`.
+- La versión 2 se desarrolla en la rama `codex/v2`.
+- Los cambios previstos para la nueva versión están en [`docs/ROADMAP-V2.md`](docs/ROADMAP-V2.md).
+- El historial de versiones está en [`CHANGELOG.md`](CHANGELOG.md).
+
 ## Funcionalidades
 
 - Importa archivos `.xlsx`, `.xls`, `.ods` y `.csv`.
@@ -47,12 +54,21 @@ El comando actualiza `../calificador-de-moodle-embebible/index.html`. Cada modif
 
 ## Verificación técnica
 
-La prueba de humo valida la interpretación de Participantes y los cálculos principales:
+Requiere Node.js 20 o superior para ejecutar las herramientas de desarrollo. La aplicación publicada continúa funcionando directamente en el navegador.
+
+La suite principal valida la interpretación de Participantes, los cálculos principales y la generación embebible:
 
 ```powershell
-node tests/smoke-test.js
-node tests/embeddable-sync-test.js
+npm test
 ```
+
+La sincronización con el repositorio embebible hermano se comprueba localmente:
+
+```powershell
+npm run test:embeddable-sync
+```
+
+GitHub Actions ejecuta la suite principal en cada cambio relevante y pull request.
 
 ## Privacidad
 
