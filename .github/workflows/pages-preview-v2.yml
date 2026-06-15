@@ -1,0 +1,51 @@
+name: Publicar vista previa V2
+
+on:
+  push:
+    branches:
+      - codex/v2
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publicar-preview-v2
+  cancel-in-progress: false
+
+jobs:
+  publish-preview:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Preparar sitio estable publicado
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: published
+
+      - name: Preparar fuentes V2
+        uses: actions/checkout@v4
+        with:
+          ref: codex/v2
+          path: preview
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Generar vista previa embebible
+        run: node preview/tools/build-embeddable.js published/v2/index.html
+
+      - name: Publicar exclusivamente la ruta V2
+        working-directory: published
+        shell: bash
+        run: |
+          touch .nojekyll
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .nojekyll v2/index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "chore: actualizar vista previa v2"
+          git push origin main

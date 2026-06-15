@@ -6,25 +6,25 @@ Mantener la versión estable y la versión en desarrollo publicadas simultáneam
 
 ## URLs
 
-- **Versión estable V1:** `https://profesorbombina.github.io/calificador-de-moodle-embebible/`
-- **Vista previa V2:** `https://profesorbombina.github.io/calificador-de-moodle-embebible/v2/`
+- **Versión estable V1:** `https://profesorbombina.github.io/calificador-de-moodle/`
+- **Vista previa V2:** `https://profesorbombina.github.io/calificador-de-moodle/v2/`
 
 ## Fuente de cada publicación
 
 | Ruta pública | Repositorio | Rama |
 | --- | --- | --- |
-| `/` | `calificador-de-moodle-embebible` | `main` |
-| `/v2/` | `calificador-de-moodle-embebible` | Copia automática de `codex/v2` en `main/v2/` |
+| `/` | `calificador-de-moodle` | `main` |
+| `/v2/` | `calificador-de-moodle` | Generación automática de `codex/v2` en `main/v2/` |
 
-GitHub Pages continúa publicando desde la raíz de `main`. El workflow `pages-versionadas.yml` copia únicamente la versión embebible de `codex/v2` dentro de `main/v2/`. El archivo `index.html` raíz no se modifica, por lo que un cambio realizado en V2 no puede reemplazar la versión estable.
+GitHub Pages continúa publicando desde la raíz de `main`. El workflow `pages-preview-v2.yml` genera una versión autocontenida de `codex/v2` dentro de `main/v2/`. Los archivos estables de la raíz no se modifican, por lo que un cambio realizado en V2 no puede reemplazar la versión estable.
 
 ## Flujo de actualización
 
 1. Implementar y verificar cambios en `calificador-de-moodle`, rama `codex/v2`.
 2. Generar la versión embebible con `npm run build:embeddable`.
 3. Ejecutar `npm run test:embeddable-sync`.
-4. Publicar `calificador-de-moodle-embebible`, rama `codex/v2`.
-5. GitHub Actions actualizará exclusivamente la carpeta `main/v2/`, publicada en la ruta `/v2/`.
+4. Publicar `calificador-de-moodle`, rama `codex/v2`.
+5. GitHub Actions generará y actualizará exclusivamente `main/v2/index.html`, publicado en la ruta `/v2/`.
 
 ## Publicación de V2 como estable
 
@@ -37,7 +37,7 @@ Cuando V2 esté aprobada:
 
 ## Configuración de GitHub Pages
 
-El repositorio embebible continúa utilizando la configuración existente:
+El repositorio principal continúa utilizando la configuración existente:
 
 1. Abrir **Settings > Pages**.
 2. Confirmar que Pages publica desde la rama `main` y la carpeta raíz.
