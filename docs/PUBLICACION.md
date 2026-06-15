@@ -14,9 +14,9 @@ Mantener la versión estable y la versión en desarrollo publicadas simultáneam
 | Ruta pública | Repositorio | Rama |
 | --- | --- | --- |
 | `/` | `calificador-de-moodle-embebible` | `main` |
-| `/v2/` | `calificador-de-moodle-embebible` | `codex/v2` |
+| `/v2/` | `calificador-de-moodle-embebible` | Copia automática de `codex/v2` en `main/v2/` |
 
-El workflow `pages-versionadas.yml` descarga ambas ramas y genera un único artefacto de GitHub Pages. La raíz siempre se toma desde `main`, por lo que un cambio realizado en V2 no puede reemplazar la versión estable.
+GitHub Pages continúa publicando desde la raíz de `main`. El workflow `pages-versionadas.yml` copia únicamente la versión embebible de `codex/v2` dentro de `main/v2/`. El archivo `index.html` raíz no se modifica, por lo que un cambio realizado en V2 no puede reemplazar la versión estable.
 
 ## Flujo de actualización
 
@@ -24,7 +24,7 @@ El workflow `pages-versionadas.yml` descarga ambas ramas y genera un único arte
 2. Generar la versión embebible con `npm run build:embeddable`.
 3. Ejecutar `npm run test:embeddable-sync`.
 4. Publicar `calificador-de-moodle-embebible`, rama `codex/v2`.
-5. GitHub Actions actualizará exclusivamente la ruta `/v2/`.
+5. GitHub Actions actualizará exclusivamente la carpeta `main/v2/`, publicada en la ruta `/v2/`.
 
 ## Publicación de V2 como estable
 
@@ -35,10 +35,10 @@ Cuando V2 esté aprobada:
 3. Verificar nuevamente ambas rutas.
 4. Mantener una ruta de vista previa para la siguiente versión.
 
-## Configuración inicial en GitHub
+## Configuración de GitHub Pages
 
-El repositorio embebible debe utilizar GitHub Actions como origen de Pages:
+El repositorio embebible continúa utilizando la configuración existente:
 
 1. Abrir **Settings > Pages**.
-2. En **Build and deployment > Source**, seleccionar **GitHub Actions**.
-3. Ejecutar manualmente el workflow **Publicar versiones en GitHub Pages** o publicar un cambio en `codex/v2`.
+2. Confirmar que Pages publica desde la rama `main` y la carpeta raíz.
+3. El workflow **Publicar vista previa V2** se ejecutará al publicar cambios en `codex/v2`.
