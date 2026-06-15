@@ -9,16 +9,18 @@ La versión 1 funciona completamente en el navegador: los archivos locales no se
 - La versión estable actual está preservada en la etiqueta `v1.0.0`.
 - La versión 2 se desarrolla en la rama `codex/v2`.
 - Los cambios previstos para la nueva versión están en [`docs/ROADMAP-V2.md`](docs/ROADMAP-V2.md).
+- La tabla de decisión del seguimiento está en [`docs/CRITERIOS-RIESGO.md`](docs/CRITERIOS-RIESGO.md).
 - El historial de versiones está en [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Funcionalidades
 
 - Importa archivos `.xlsx`, `.xls`, `.ods` y `.csv`.
 - Admite una URL pública o compartida de Google Sheets.
-- Interpreta el texto copiado desde la pantalla **Participantes** de Moodle.
+- Guía al usuario mediante cinco pasos obligatorios y visuales.
+- Interpreta listados de **Participantes** de Moodle con 5, 6 o 7 columnas.
 - Cruza estudiantes por correo electrónico.
 - Detecta actividades cuyos encabezados incluyen Foro, Cuestionario o Tarea.
-- Calcula entregas, promedios, nivel de participación y señales de riesgo.
+- Calcula entregas, promedios, nivel de participación y señales de riesgo configurables.
 - Cuenta entregas con escalas numéricas y textuales, por ejemplo Aprobado/Desaprobado.
 - Calcula las métricas según las actividades planificadas a la fecha.
 - Permite buscar y filtrar estudiantes por nivel de riesgo y promedio.
@@ -28,10 +30,12 @@ La versión 1 funciona completamente en el navegador: los archivos locales no se
 
 1. Abrí `index.html` en un navegador moderno.
 2. Cargá la exportación del calificador o una URL pública de Google Sheets.
-3. Opcionalmente, pegá el listado copiado desde Participantes.
+3. Pegá el listado copiado desde Participantes.
 4. Indicá la cantidad de actividades a realizar a la fecha.
-5. Presioná **Analizar curso**.
-6. Revisá el dashboard y descargá el informe.
+5. Indicá la cantidad mínima de entregas esperadas.
+6. Indicá la nota de aprobación entre 0 y 100.
+7. Presioná **Analizar curso**.
+8. Revisá el dashboard y descargá el informe.
 
 ## Publicación en GitHub Pages
 
@@ -95,7 +99,7 @@ calificador-de-moodle-v1/
 
 ## Limitaciones conocidas de la v1
 
-- La clasificación de riesgo es orientativa: Riesgo Alto hasta 35%, Riesgo Medio entre 36% y 70%, y Riesgo Bajo por encima del 70% de entregas. Nunca haber ingresado implica Riesgo Alto.
+- La clasificación de riesgo depende del acceso, las entregas mínimas y la nota de aprobación configuradas por el usuario.
 - El promedio del curso considera únicamente calificaciones numéricas.
 - La detección automática depende de los nombres de columnas exportados por Moodle.
 - Las URLs privadas de Google Sheets no pueden abrirse sin integrar autenticación.

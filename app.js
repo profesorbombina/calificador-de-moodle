@@ -22,6 +22,10 @@ const elements = {
   clearParticipantsBtn: document.querySelector("#clearParticipantsBtn"),
   plannedActivities: document.querySelector("#plannedActivities"),
   plannedStatus: document.querySelector("#plannedStatus"),
+  minimumDeliveries: document.querySelector("#minimumDeliveries"),
+  minimumStatus: document.querySelector("#minimumStatus"),
+  approvalGrade: document.querySelector("#approvalGrade"),
+  approvalStatus: document.querySelector("#approvalStatus"),
   sourceStatus: document.querySelector("#sourceStatus"),
   participantStatus: document.querySelector("#participantStatus"),
   analyzeBtn: document.querySelector("#analyzeBtn"),
@@ -67,6 +71,8 @@ elements.studentSearch.addEventListener("input", applyStudentFilters);
 elements.riskFilter.addEventListener("change", applyStudentFilters);
 elements.averageFilter.addEventListener("change", applyStudentFilters);
 elements.plannedActivities.addEventListener("input", validatePlannedActivities);
+elements.minimumDeliveries.addEventListener("input", validateMinimumDeliveries);
+elements.approvalGrade.addEventListener("input", validateApprovalGrade);
 elements.fileTab.addEventListener("click", () => selectSourceTab("file"));
 elements.urlTab.addEventListener("click", () => selectSourceTab("url"));
 elements.participantText.addEventListener("input", updateParticipantStatus);
@@ -108,8 +114,8 @@ async function selectLocalFile(file) {
     state.sourceName = file.name;
     elements.fileName.textContent = file.name;
     setStatus("source", "Archivo listo", "ok");
-    setProcessStatus("Fuente cargada. Ya podés analizar el curso.", "ok");
-    validatePlannedActivities();
+    setProcessStatus("Fuente cargada. Continuá con los pasos obligatorios.", "ok");
+    updateFormReadiness();
   } catch (error) {
     setProcessStatus(`No se pudo leer el archivo: ${error.message}`, "error");
   }
@@ -131,8 +137,8 @@ async function loadGoogleSheet() {
     state.sourceData = await response.arrayBuffer();
     state.sourceName = "google-sheets-moodle.xlsx";
     setStatus("source", "Google Sheets listo", "ok");
-    setProcessStatus("Hoja cargada. Ya podés analizar el curso.", "ok");
-    validatePlannedActivities();
+    setProcessStatus("Hoja cargada. Continuá con los pasos obligatorios.", "ok");
+    updateFormReadiness();
   } catch (error) {
     setStatus("source", "No disponible", "error");
     setProcessStatus("No se pudo abrir la hoja. Verificá que sea pública o accesible mediante enlace.", "error");
@@ -150,23 +156,64 @@ function buildGoogleExportUrl(rawUrl) {
 function updateParticipantStatus() {
   const text = elements.participantText.value.trim();
   if (!text) {
-    setStatus("participant", "Opcional", "neutral");
-    elements.participantHint.textContent = "Se tomarán únicamente los registros con rol Estudiante.";
+    setStatus("participant", "Requerido", "neutral");
+    elements.participantHint.textContent = "Acepta 5, 6 o 7 columnas copiadas desde Participantes de Moodle.";
+    updateFormReadiness();
     return;
   }
   const students = parseMoodleParticipants(text);
   setStatus("participant", `${students.length} detectados`, students.length ? "ok" : "error");
   elements.participantHint.textContent = students.length
     ? `${students.length} estudiantes únicos listos para cruzar.`
-    : "No se detectaron estudiantes. Podés analizar igualmente las calificaciones.";
+    : "No se detectaron estudiantes con correo y rol Estudiante.";
+  updateFormReadiness();
 }
 
 function validatePlannedActivities() {
-  const value = Number(elements.plannedActivities.value);
+  const value = parseRequiredInteger(elements.plannedActivities.value);
   const valid = Number.isInteger(value) && value >= 0 && value <= 100;
-  setStatusElement(elements.plannedStatus, valid ? `${value} actividades` : "Valor inválido", valid ? "ok" : "error");
-  elements.analyzeBtn.disabled = !(state.sourceData && valid);
+  const empty = elements.plannedActivities.value.trim() === "";
+  setStatusElement(elements.plannedStatus, valid ? `${value} actividades` : empty ? "Requerido" : "Valor inválido", valid ? "ok" : empty ? "neutral" : "error");
+  validateMinimumDeliveries(false);
+  updateAnalyzeButton();
   return valid ? value : null;
+}
+
+function validateMinimumDeliveries(updateButton = true) {
+  const value = parseRequiredInteger(elements.minimumDeliveries.value);
+  const planned = parseRequiredInteger(elements.plannedActivities.value);
+  const valid = Number.isInteger(value) && value >= 0 && value <= 100 && Number.isInteger(planned) && value <= planned;
+  const empty = elements.minimumDeliveries.value.trim() === "";
+  const message = valid ? `${value} entregas` : empty ? "Requerido" : Number.isInteger(planned) ? `Debe estar entre 0 y ${planned}` : "Completá primero el Paso 3";
+  setStatusElement(elements.minimumStatus, message, valid ? "ok" : empty ? "neutral" : "error");
+  if (updateButton) updateAnalyzeButton();
+  return valid ? value : null;
+}
+
+function validateApprovalGrade() {
+  const value = parseRequiredInteger(elements.approvalGrade.value);
+  const valid = Number.isInteger(value) && value >= 0 && value <= 100;
+  const empty = elements.approvalGrade.value.trim() === "";
+  setStatusElement(elements.approvalStatus, valid ? `Aprueba con ${value}` : empty ? "Requerido" : "Valor inválido", valid ? "ok" : empty ? "neutral" : "error");
+  updateAnalyzeButton();
+  return valid ? value : null;
+}
+
+function updateFormReadiness() {
+  validatePlannedActivities();
+  validateApprovalGrade();
+  updateAnalyzeButton();
+}
+
+function updateAnalyzeButton() {
+  const participantsValid = parseMoodleParticipants(elements.participantText.value).length > 0;
+  const planned = parseRequiredInteger(elements.plannedActivities.value);
+  const minimum = parseRequiredInteger(elements.minimumDeliveries.value);
+  const approval = parseRequiredInteger(elements.approvalGrade.value);
+  const configurationValid = Number.isInteger(planned) && planned >= 0 && planned <= 100 &&
+    Number.isInteger(minimum) && minimum >= 0 && minimum <= planned &&
+    Number.isInteger(approval) && approval >= 0 && approval <= 100;
+  elements.analyzeBtn.disabled = !(state.sourceData && participantsValid && configurationValid);
 }
 
 function clearParticipants() {
@@ -177,8 +224,11 @@ function clearParticipants() {
 async function analyzeCourse() {
   if (!state.sourceData) return;
   const plannedActivities = validatePlannedActivities();
-  if (plannedActivities === null) {
-    setProcessStatus("Ingresá un número entero entre 0 y 100 para las actividades a la fecha.", "error");
+  const minimumDeliveries = validateMinimumDeliveries();
+  const approvalGrade = validateApprovalGrade();
+  const participants = parseMoodleParticipants(elements.participantText.value);
+  if (!participants.length || plannedActivities === null || minimumDeliveries === null || approvalGrade === null) {
+    setProcessStatus("Completá correctamente los cinco pasos obligatorios antes de analizar.", "error");
     return;
   }
 
@@ -192,8 +242,7 @@ async function analyzeCourse() {
     const workbook = XLSX.read(state.sourceData, { type: "array", cellDates: true });
     const gradeSheetName = detectGradeSheet(workbook);
     const gradeRows = XLSX.utils.sheet_to_json(workbook.Sheets[gradeSheetName], { header: 1, defval: "", raw: true });
-    const participants = parseMoodleParticipants(elements.participantText.value);
-    state.analysis = buildAnalysis(gradeRows, participants, gradeSheetName, plannedActivities);
+    state.analysis = buildAnalysis(gradeRows, participants, gradeSheetName, plannedActivities, minimumDeliveries, approvalGrade);
 
     renderDashboard(state.analysis);
     elements.downloadBtn.disabled = false;
@@ -205,7 +254,7 @@ async function analyzeCourse() {
   } catch (error) {
     setProcessStatus(`No se pudo analizar la fuente: ${error.message}`, "error");
   } finally {
-    elements.analyzeBtn.disabled = !state.sourceData;
+    updateAnalyzeButton();
   }
 }
 
@@ -221,7 +270,7 @@ function detectGradeSheet(workbook) {
   return workbook.SheetNames[0];
 }
 
-function buildAnalysis(rows, participants, sheetName, plannedActivities = 0) {
+function buildAnalysis(rows, participants, sheetName, plannedActivities = 0, minimumDeliveries = 0, approvalGrade = 0) {
   if (rows.length < 2) throw new Error("La hoja de calificaciones no contiene datos suficientes");
 
   const headers = rows[0].map(value => String(value || "").trim());
@@ -277,7 +326,7 @@ function buildAnalysis(rows, participants, sheetName, plannedActivities = 0) {
     const noAccess = normalizeText(participant.access) === "nunca";
     const expectedActivities = plannedActivities;
     const deliveryRate = expectedActivities > 0 ? Math.min(delivered / expectedActivities, 1) : 0;
-    const risk = classifyRisk(deliveryRate, noAccess, expectedActivities);
+    const risk = classifyRisk({ delivered, average, noAccess, minimumDeliveries, approvalGrade });
 
     students.push({
       name: participant.name || fullName || email,
@@ -289,7 +338,8 @@ function buildAnalysis(rows, participants, sheetName, plannedActivities = 0) {
       delivered,
       average,
       deliveryRate,
-      status: risk
+      status: risk.status,
+      riskReason: risk.reason
     });
   }
 
@@ -313,6 +363,8 @@ function buildAnalysis(rows, participants, sheetName, plannedActivities = 0) {
     sourceName: state.sourceName,
     sourceSheet: sheetName,
     plannedActivities,
+    minimumDeliveries,
+    approvalGrade,
     activities,
     students,
     totals: {
@@ -370,7 +422,7 @@ function renderAlerts(analysis) {
 
   if (totals.noAccess) alerts.push(["danger", "!", `${totals.noAccess} sin ingreso`, "Conviene contactar primero a quienes nunca accedieron al aula."]);
   if (weakActivities.length) alerts.push(["warning", "↓", `${weakActivities.length} actividades con baja entrega`, "Tienen menos del 50% de participación registrada."]);
-  if (totals.riskHigh) alerts.push(["danger", "!", `${totals.riskHigh} estudiantes en Riesgo Alto`, "La señal combina hasta 35% de entregas o falta de acceso."]);
+  if (totals.riskHigh) alerts.push(["danger", "!", `${totals.riskHigh} estudiantes en Riesgo Alto`, "No ingresaron, no entregaron actividades o su promedio está desaprobado."]);
   if (totals.deliveryRate >= 0.75) alerts.push(["success", "✓", "Buen nivel de participación", `El curso alcanza ${formatPercent(totals.deliveryRate)} de entregas.`]);
   if (!alerts.length) alerts.push(["success", "✓", "Sin alertas críticas", "El análisis no encontró señales prioritarias."]);
 
@@ -390,7 +442,7 @@ function applyStudentFilters() {
   state.filteredStudents = state.analysis.students.filter(student => {
     const matchesText = !query || normalizeText(`${student.name} ${student.email} ${student.group}`).includes(query);
     const matchesStatus = status === "all" || student.status === status;
-    const matchesAverage = averageMatches(student.average, averageFilter);
+    const matchesAverage = averageMatches(student.average, averageFilter, state.analysis.approvalGrade);
     return matchesText && matchesStatus && matchesAverage;
   });
   renderStudentTable(state.filteredStudents, state.analysis.activities.length);
@@ -399,7 +451,7 @@ function applyStudentFilters() {
 function renderStudentTable(students, activityCount) {
   elements.tableCount.textContent = `${students.length} registros`;
   if (!students.length) {
-    elements.studentTableBody.innerHTML = '<tr><td colspan="7" class="table-empty">No hay estudiantes que coincidan con el filtro.</td></tr>';
+    elements.studentTableBody.innerHTML = '<tr><td colspan="8" class="table-empty">No hay estudiantes que coincidan con el filtro.</td></tr>';
     return;
   }
   elements.studentTableBody.innerHTML = students.map(student => `
@@ -410,25 +462,26 @@ function renderStudentTable(students, activityCount) {
       <td>${student.delivered} / ${activityCount}</td>
       <td>${student.average === null ? "Sin nota" : student.average.toFixed(2)}</td>
       <td class="muted-cell">${escapeHtml(student.access)}</td>
-      <td>${statusBadge(student.status)}</td>
+      <td>${statusBadge(student.status, student.riskReason)}</td>
+      <td class="reason-cell">${escapeHtml(student.riskReason)}</td>
     </tr>`).join("");
 }
 
-function statusBadge(status) {
+function statusBadge(status, reason = "") {
   const config = {
     low: ["Riesgo Bajo", "badge-low"],
     medium: ["Riesgo Medio", "badge-medium"],
     high: ["Riesgo Alto", "badge-high"]
   };
   const [label, className] = config[status];
-  return `<span class="badge ${className}">${label}</span>`;
+  return `<span class="badge ${className}" title="${escapeHtml(reason)}">${label}</span>`;
 }
 
 function downloadReport() {
   if (!state.analysis) return;
   const workbook = buildReportWorkbook(state.analysis);
   const baseName = state.sourceName.replace(/\.(xlsx|xls|ods|csv)$/i, "") || "curso-moodle";
-  XLSX.writeFile(workbook, `${baseName} - Informe Moodle v1.xlsx`);
+  XLSX.writeFile(workbook, `${baseName} - Informe Moodle v2.xlsx`);
   setProcessStatus("Informe descargado correctamente.", "ok");
 }
 
@@ -442,6 +495,7 @@ function buildReportWorkbook(analysis) {
     ["Estudiantes", analysis.students.length, "Cruce con Participantes", analysis.totals.matchedParticipants],
     ["Actividades", analysis.activities.length, "Entregas registradas", analysis.totals.delivered],
     ["Actividades a la fecha", analysis.plannedActivities, "Entregas esperadas", analysis.totals.possible],
+    ["Entregas mínimas", analysis.minimumDeliveries, "Nota de aprobación", analysis.approvalGrade],
     ["Nivel de entrega", analysis.totals.deliveryRate, "Promedio del Curso", analysis.totals.average ?? ""],
     ["Riesgo Bajo", analysis.totals.riskLow, "Riesgo Medio", analysis.totals.riskMedium],
     ["Riesgo Alto", analysis.totals.riskHigh, "Nunca ingresaron", analysis.totals.noAccess],
@@ -458,7 +512,7 @@ function buildReportWorkbook(analysis) {
   styleDashboardSheet(dashboardSheet, dashboardData.length);
   XLSX.utils.book_append_sheet(workbook, dashboardSheet, "Dashboard");
 
-  const gradeHeaders = ["Nombre", "Correo", "ID", "Grupo", ...analysis.activities.map(activity => activity.name), "Entregas", "Promedio", "Último acceso", "Estado"];
+  const gradeHeaders = ["Nombre", "Correo", "ID", "Grupo", ...analysis.activities.map(activity => activity.name), "Entregas", "Promedio", "Último acceso", "Estado", "Motivo"];
   const gradeRows = analysis.students.map(student => [
     student.name,
     student.email,
@@ -468,14 +522,15 @@ function buildReportWorkbook(analysis) {
     student.delivered,
     student.average ?? "",
     student.access,
-    statusLabel(student.status)
+    statusLabel(student.status),
+    student.riskReason
   ]);
   const gradeSheet = XLSX.utils.aoa_to_sheet([gradeHeaders, ...gradeRows]);
   styleDataSheet(gradeSheet, gradeHeaders.length, gradeRows.length + 1);
   XLSX.utils.book_append_sheet(workbook, gradeSheet, "Calificaciones");
 
-  const trackingHeaders = ["Nombre y Apellido", "Correo", "Grupo", "Último acceso", "Estado"];
-  const trackingRows = analysis.students.map(student => [student.name, student.email, student.group, student.access, statusLabel(student.status)]);
+  const trackingHeaders = ["Nombre y Apellido", "Correo", "Grupo", "Último acceso", "Estado", "Motivo"];
+  const trackingRows = analysis.students.map(student => [student.name, student.email, student.group, student.access, statusLabel(student.status), student.riskReason]);
   const trackingSheet = XLSX.utils.aoa_to_sheet([trackingHeaders, ...trackingRows]);
   styleDataSheet(trackingSheet, trackingHeaders.length, trackingRows.length + 1);
   XLSX.utils.book_append_sheet(workbook, trackingSheet, "Seguimiento");
@@ -491,14 +546,14 @@ function styleDashboardSheet(sheet, rowCount) {
       sheet[ref].s = { font: { name: "Aptos", sz: 10, color: { rgb: "FF163238" } }, alignment: { vertical: "center", wrapText: true }, border };
     }
   }
-  ["A1", "A4", "A12"].forEach(ref => {
+  ["A1", "A4", "A13"].forEach(ref => {
     sheet[ref].s.fill = { fgColor: { rgb: "FF087C68" } };
     sheet[ref].s.font = { name: "Aptos Display", bold: true, sz: ref === "A1" ? 18 : 11, color: { rgb: "FFFFFFFF" } };
   });
   sheet["!merges"] = [XLSX.utils.decode_range("A1:D1"), XLSX.utils.decode_range("A4:D4")];
   sheet["!cols"] = [{ wch:28 }, { wch:18 }, { wch:28 }, { wch:18 }];
-  sheet["B8"].z = "0.00%";
-  for (let row = 13; row <= rowCount; row++) sheet[`C${row}`].z = "0.00%";
+  sheet["B9"].z = "0.00%";
+  for (let row = 14; row <= rowCount; row++) sheet[`C${row}`].z = "0.00%";
 }
 
 function styleDataSheet(sheet, colCount, rowCount) {
@@ -531,26 +586,36 @@ function parseMoodleParticipants(rawText) {
 
   const selectorRegex = /Seleccionar\s+['"]([^'"]+)['"]/gi;
   const matches = [...text.matchAll(selectorRegex)];
+  const tabularRows = text.split("\n")
+    .map(row => row.split("\t").map(cell => cell.trim()).filter(Boolean))
+    .filter(cells => cells.some(cell => /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(cell)));
   const blocks = matches.length
     ? matches.map((match, index) => ({
         name: cleanPersonName(match[1]),
         content: text.slice(match.index, matches[index + 1]?.index ?? text.length)
       }))
-    : text.split(/\n{2,}/).map(content => ({ name: "", content }));
+    : tabularRows.length
+      ? tabularRows.map(cells => ({ name: cleanPersonName(cells[0]), cells }))
+      : text.split(/\n{2,}/).map(content => ({ name: "", content }));
 
   const unique = new Map();
   for (const block of blocks) {
-    const cells = block.content.split(/\n|\t+/).map(value => value.trim()).filter(Boolean);
-    const email = block.content.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0] || "";
-    const role = cells.find(cell => ["estudiante", "student"].includes(normalizeText(cell)));
+    const cells = block.cells || block.content.split(/\n|\t+/).map(value => value.trim()).filter(Boolean);
+    const email = cells.find(cell => /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(cell))
+      ?.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0] || "";
+    const role = cells.find(cell => {
+      const normalized = normalizeText(cell);
+      return normalized.includes("estudiante") || normalized.includes("student");
+    });
     if (!email || !role) continue;
     const roleIndex = cells.indexOf(role);
-    const access = [...cells].reverse().find(cell => /^(Nunca|Never|\d+\s+(día|días|hora|horas|minuto|minutos|segundo|segundos))/i.test(cell)) || "Sin dato";
+    const access = cells.find(isAccessValue) || "Sin dato";
     const accessIndex = cells.indexOf(access);
     const groups = roleIndex >= 0 && accessIndex > roleIndex ? cells.slice(roleIndex + 1, accessIndex).join(" ") : "Sin grupo";
+    const status = accessIndex >= 0 ? cells.slice(accessIndex + 1).find(isParticipantStatus) || "Sin dato" : "Sin dato";
     const emailIndex = cells.findIndex(cell => cell.includes(email));
     const name = block.name || cleanPersonName(cells[emailIndex - 1] || email);
-    unique.set(email.toLowerCase(), { name, email, role, groups: groups || "Sin grupo", access });
+    unique.set(email.toLowerCase(), { name, email, role, groups: groups || "Sin grupo", access, status });
   }
   return [...unique.values()];
 }
@@ -588,21 +653,25 @@ function parseSubmission(value) {
   };
 }
 
-function classifyRisk(deliveryRate, noAccess, expectedActivities) {
-  if (noAccess) return "high";
-  if (expectedActivities === 0) return "low";
-  if (deliveryRate <= 0.35) return "high";
-  if (deliveryRate <= 0.70) return "medium";
-  return "low";
+function classifyRisk({ delivered, average, noAccess, minimumDeliveries, approvalGrade }) {
+  if (noAccess) return { status: "high", reason: "Nunca ingresó a la plataforma" };
+  if (delivered === 0) return { status: "high", reason: "No realizó entregas" };
+  if (average !== null && average < approvalGrade) {
+    return { status: "high", reason: `Promedio ${average.toFixed(2)} inferior a la nota de aprobación (${approvalGrade})` };
+  }
+  if (delivered >= minimumDeliveries && average !== null && average >= approvalGrade) {
+    return { status: "low", reason: "Ingresó, alcanzó las entregas mínimas y tiene promedio aprobado" };
+  }
+  if (average === null) return { status: "medium", reason: "Tiene entregas, pero no dispone de promedio numérico" };
+  return { status: "medium", reason: `Realizó ${delivered} de ${minimumDeliveries} entregas mínimas esperadas` };
 }
 
-function averageMatches(average, filter) {
+function averageMatches(average, filter, approvalGrade) {
   if (filter === "all") return true;
   if (filter === "none") return average === null;
   if (average === null) return false;
-  if (filter === "below4") return average < 4;
-  if (filter === "between4and7") return average >= 4 && average < 7;
-  return average >= 7;
+  if (filter === "belowApproval") return average < approvalGrade;
+  return average >= approvalGrade;
 }
 
 function averageOf(values) {
@@ -616,6 +685,23 @@ function statusLabel(status) {
 
 function normalizeText(value) {
   return String(value || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ");
+}
+
+function parseRequiredInteger(value) {
+  if (String(value).trim() === "") return null;
+  const parsed = Number(value);
+  return Number.isInteger(parsed) ? parsed : null;
+}
+
+function isAccessValue(value) {
+  const text = normalizeText(value);
+  return text === "nunca" || text === "never" ||
+    /^\d+\s+(dia|dias|hora|horas|minuto|minutos|segundo|segundos)/.test(text);
+}
+
+function isParticipantStatus(value) {
+  const text = normalizeText(value);
+  return ["activo", "activa", "inactivo", "inactiva", "suspendido", "suspendida", "active", "inactive", "suspended"].includes(text);
 }
 
 function cleanPersonName(value) {
@@ -669,7 +755,9 @@ function resetApplication() {
   elements.fileName.textContent = "Ningún archivo seleccionado";
   elements.sheetUrl.value = "";
   elements.participantText.value = "";
-  elements.plannedActivities.value = "0";
+  elements.plannedActivities.value = "";
+  elements.minimumDeliveries.value = "";
+  elements.approvalGrade.value = "";
   elements.studentSearch.value = "";
   elements.riskFilter.value = "all";
   elements.averageFilter.value = "all";
@@ -698,9 +786,10 @@ function resetApplication() {
   elements.activityChart.textContent = "Los indicadores aparecerán después del análisis.";
   elements.alertsList.className = "alerts-list empty-state";
   elements.alertsList.textContent = "Todavía no hay señales para mostrar.";
-  elements.studentTableBody.innerHTML = '<tr><td colspan="7" class="table-empty">Cargá información para construir el seguimiento.</td></tr>';
+  elements.studentTableBody.innerHTML = '<tr><td colspan="8" class="table-empty">Cargá información para construir el seguimiento.</td></tr>';
   elements.tableCount.textContent = "0 registros";
-  validatePlannedActivities();
+  updateFormReadiness();
 }
 
-validatePlannedActivities();
+updateParticipantStatus();
+updateFormReadiness();

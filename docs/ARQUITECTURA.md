@@ -31,13 +31,25 @@ Mantener una aplicación estática, fácil de publicar y capaz de procesar infor
 
 ## Criterio de riesgo
 
-Un estudiante queda marcado:
+El usuario configura las actividades a la fecha, las entregas mínimas esperadas y la nota de aprobación.
 
-- **Riesgo Alto**: entregó hasta el 35% de las actividades planificadas o nunca ingresó.
-- **Riesgo Medio**: entregó entre el 36% y el 70%.
-- **Riesgo Bajo**: entregó más del 70%.
+- **Riesgo Alto**: nunca ingresó, no realizó entregas o tiene promedio numérico inferior a la nota de aprobación.
+- **Riesgo Bajo**: ingresó, alcanzó las entregas mínimas y tiene promedio numérico igual o superior a la nota de aprobación.
+- **Riesgo Medio**: tiene actividad registrada, pero todavía no reúne todas las condiciones de Riesgo Bajo y tampoco presenta una condición de Riesgo Alto.
 
-Este criterio está aislado dentro de `buildAnalysis` para facilitar cambios futuros.
+Cada estudiante conserva un motivo explicativo. El criterio está aislado dentro de `classifyRisk` para facilitar cambios futuros.
+
+La especificación funcional y los casos especiales están documentados en [`CRITERIOS-RIESGO.md`](CRITERIOS-RIESGO.md).
+
+## Participantes
+
+El parser acepta listados copiados desde Moodle con 5, 6 o 7 columnas:
+
+- Las cinco columnas base: nombre, correo, roles, grupos y último acceso.
+- Una sexta columna opcional de estatus.
+- Una columna opcional de nombre de usuario ubicada antes del correo.
+
+El cruce utiliza el correo electrónico y solamente incorpora registros con rol Estudiante.
 
 Las escalas textuales cuentan como entregas. El promedio del curso y los promedios individuales utilizan exclusivamente calificaciones numéricas.
 
@@ -58,7 +70,6 @@ node tools/build-embeddable.js
 
 ## Próximas extensiones recomendadas
 
-- Configuración editable del umbral de riesgo.
 - Autenticación para Google Sheets privados.
 - Detección de escalas de calificación y notas aprobatorias.
 - Persistencia de análisis históricos.

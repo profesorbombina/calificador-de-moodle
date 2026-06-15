@@ -12,6 +12,14 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y l
 - Comandos estandarizados de prueba y generacion.
 - Integracion continua mediante GitHub Actions.
 - Documentacion del flujo de contribucion y hoja de ruta.
+- Flujo visual guiado de cinco pasos obligatorios.
+- Soporte de listados de Participantes con 5, 6 o 7 columnas.
+- Configuracion de entregas minimas esperadas y nota de aprobacion.
+
+### Cambiado
+
+- Clasificacion de riesgo basada en acceso, entregas, promedio y criterios configurables.
+- Informe exportado con el motivo de riesgo de cada estudiante.
 
 ## [1.0.0] - 2026-06-15
 

@@ -1,5 +1,16 @@
 # Bitácora
 
+## Versión 2 en desarrollo
+
+### Flujo guiado y criterio de riesgo
+
+- Incorporación de cinco pasos visuales y obligatorios.
+- Soporte de listados de Participantes con 5, 6 o 7 columnas.
+- Configuración de entregas mínimas esperadas y nota de aprobación.
+- Reclasificación de Riesgo Alto, Medio y Bajo según acceso, entregas y promedio.
+- Incorporación del motivo de riesgo en la interfaz y el informe exportado.
+- Pruebas automatizadas para los formatos de Participantes y los tres niveles de riesgo.
+
 ## Versión 1
 
 Fecha: 9 de junio de 2026

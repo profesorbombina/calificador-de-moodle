@@ -52,7 +52,7 @@ let bundled = html
   .replace('  <script defer src="app.js"></script>\n', "")
   .replace("</body>", `<script>\n${app}\n</script>\n</body>`)
   .replace("<title>Calificador de Moodle</title>", "<title>Calificador de Moodle · Embebible</title>")
-  .replace("VERSIÓN 1 · TODO EN UNA PANTALLA", "VERSIÓN 1 · EMBEBIBLE EN GOOGLE SITES");
+  .replace("VERSIÓN 2 · FLUJO GUIADO", "VERSIÓN 2 · EMBEBIBLE EN GOOGLE SITES");
 
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 fs.writeFileSync(outputPath, bundled, "utf8");

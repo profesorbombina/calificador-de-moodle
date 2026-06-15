@@ -39,9 +39,9 @@
 
     <section class="hero">
       <div>
-        <span class="version-pill">VERSIÓN 1 · TODO EN UNA PANTALLA</span>
+        <span class="version-pill">VERSIÓN 2 · FLUJO GUIADO</span>
         <h2>Análisis del Calificador y Participantes de un Curso de Moodle</h2>
-        <p>Cargá las calificaciones, pegá los participantes y obtené un tablero profesional junto con un Excel listo para trabajar.</p>
+        <p>Completá los cinco pasos guiados y obtené un diagnóstico claro del curso junto con un Excel listo para trabajar.</p>
       </div>
       <div class="privacy-note">
         <span class="privacy-icon" aria-hidden="true">✓</span>
@@ -53,7 +53,8 @@
     </section>
 
     <section class="workspace" aria-label="Carga y preparación de datos">
-      <article class="panel input-panel">
+      <article class="panel input-panel step-card">
+        <span class="step-marker"><strong>1</strong><span>Paso 1</span></span>
         <div class="panel-heading">
           <div>
             <span class="section-kicker">FUENTE PRINCIPAL</span>
@@ -87,23 +88,25 @@
         </div>
       </article>
 
-      <article class="panel input-panel">
+      <article class="panel input-panel step-card">
+        <span class="step-marker"><strong>2</strong><span>Paso 2</span></span>
         <div class="panel-heading">
           <div>
             <span class="section-kicker">CONTEXTO DEL CURSO</span>
             <h3>Participantes</h3>
           </div>
-          <span id="participantStatus" class="status-pill neutral">Opcional</span>
+          <span id="participantStatus" class="status-pill neutral">Requerido</span>
         </div>
         <label class="field-label" for="participantText">Listado copiado desde Moodle</label>
-        <textarea id="participantText" placeholder="Pegá aquí el contenido de la pantalla Participantes de Moodle..."></textarea>
+        <textarea id="participantText" required placeholder="Pegá aquí las 5, 6 o 7 columnas copiadas desde la pantalla Participantes de Moodle..."></textarea>
         <div class="textarea-footer">
-          <span id="participantHint">Se tomarán únicamente los registros con rol Estudiante.</span>
+          <span id="participantHint">Acepta Nombre, correo, rol, grupo, último acceso y, opcionalmente, usuario y estatus.</span>
           <button class="text-button" id="clearParticipantsBtn" type="button">Limpiar texto</button>
         </div>
       </article>
 
-      <article class="panel input-panel planned-panel">
+      <article class="panel input-panel planned-panel step-card">
+        <span class="step-marker"><strong>3</strong><span>Paso 3</span></span>
         <div class="panel-heading">
           <div>
             <span class="section-kicker">PLANIFICACIÓN</span>
@@ -112,8 +115,36 @@
           <span id="plannedStatus" class="status-pill neutral">Requerido</span>
         </div>
         <label class="field-label" for="plannedActivities">Cantidad planificada entre 0 y 100</label>
-        <input id="plannedActivities" class="number-field" type="number" min="0" max="100" step="1" inputmode="numeric" value="0">
-        <p class="field-help">Este valor se usará para calcular entregas esperadas y niveles de riesgo.</p>
+        <input id="plannedActivities" class="number-field" type="number" min="0" max="100" step="1" inputmode="numeric" required placeholder="Ej.: 12">
+        <p class="field-help">Cantidad total de actividades que deberían haberse realizado hasta hoy.</p>
+      </article>
+
+      <article class="panel input-panel planned-panel step-card">
+        <span class="step-marker"><strong>4</strong><span>Paso 4</span></span>
+        <div class="panel-heading">
+          <div>
+            <span class="section-kicker">CRITERIO DE SEGUIMIENTO</span>
+            <h3>Entregas mínimas esperadas</h3>
+          </div>
+          <span id="minimumStatus" class="status-pill neutral">Requerido</span>
+        </div>
+        <label class="field-label" for="minimumDeliveries">Número entero entre 0 y las actividades del Paso 3</label>
+        <input id="minimumDeliveries" class="number-field" type="number" min="0" max="100" step="1" inputmode="numeric" required placeholder="Ej.: 10">
+        <p class="field-help">Quien alcance esta cantidad de entregas y apruebe tendrá Riesgo Bajo.</p>
+      </article>
+
+      <article class="panel input-panel planned-panel step-card">
+        <span class="step-marker"><strong>5</strong><span>Paso 5</span></span>
+        <div class="panel-heading">
+          <div>
+            <span class="section-kicker">CRITERIO DE APROBACIÓN</span>
+            <h3>Nota de aprobación</h3>
+          </div>
+          <span id="approvalStatus" class="status-pill neutral">Requerido</span>
+        </div>
+        <label class="field-label" for="approvalGrade">Número entero de 0 a 100</label>
+        <input id="approvalGrade" class="number-field" type="number" min="0" max="100" step="1" inputmode="numeric" required placeholder="Ej.: 60">
+        <p class="field-help">Un promedio inferior a esta nota determina Riesgo Alto.</p>
       </article>
 
       <aside class="panel action-panel">
@@ -123,9 +154,9 @@
           <p>La aplicación detectará estudiantes, actividades, entregas, promedios y señales de riesgo.</p>
         </div>
         <ul class="check-list">
-          <li><span>✓</span> Limpieza automática</li>
-          <li><span>✓</span> Cruce por correo</li>
-          <li><span>✓</span> Informe Excel mejorado</li>
+          <li><span>✓</span> Riesgo Alto: sin acceso, sin entregas o promedio desaprobado</li>
+          <li><span>✓</span> Riesgo Bajo: accede, cumple entregas mínimas y aprueba</li>
+          <li><span>✓</span> Riesgo Medio: requiere seguimiento preventivo</li>
         </ul>
         <button class="button button-primary button-large" id="analyzeBtn" type="button" disabled>
           Analizar curso <span aria-hidden="true">→</span>
@@ -154,9 +185,8 @@
           <select id="averageFilter" aria-label="Filtrar por promedio" disabled>
             <option value="all">Todos los promedios</option>
             <option value="none">Sin promedio</option>
-            <option value="below4">Menor a 4</option>
-            <option value="between4and7">Entre 4 y 6,99</option>
-            <option value="sevenOrMore">7 o más</option>
+            <option value="belowApproval">Debajo de aprobación</option>
+            <option value="approved">Aprobados</option>
           </select>
         </div>
       </div>
@@ -187,20 +217,20 @@
           <div><strong id="metricAverage">0</strong><span>Promedio del Curso</span></div>
           <small id="metricAverageNote">Solo notas numéricas</small>
         </article>
-        <article class="metric-card accent-red">
+        <article class="metric-card accent-green">
           <div class="metric-icon">!</div>
           <div><strong id="metricRiskLow">0</strong><span>Riesgo Bajo</span></div>
-          <small>Más del 70% de entregas</small>
+          <small>Al día y aprobado</small>
         </article>
         <article class="metric-card accent-yellow">
           <div class="metric-icon">!</div>
           <div><strong id="metricRiskMedium">0</strong><span>Riesgo Medio</span></div>
-          <small>Entre 36% y 70%</small>
+          <small>Requiere seguimiento</small>
         </article>
-        <article class="metric-card accent-cyan">
+        <article class="metric-card accent-red">
           <div class="metric-icon">!</div>
           <div><strong id="metricRiskHigh">0</strong><span>Riesgo Alto</span></div>
-          <small>Hasta 35% o sin ingreso</small>
+          <small>Sin acceso, sin entregas o desaprobado</small>
         </article>
       </div>
 
@@ -227,9 +257,9 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Estudiante</th><th>Correo</th><th>Grupo</th><th>Entregas</th><th>Promedio</th><th>Último acceso</th><th>Estado</th></tr></thead>
+            <thead><tr><th>Estudiante</th><th>Correo</th><th>Grupo</th><th>Entregas</th><th>Promedio</th><th>Último acceso</th><th>Estado</th><th>Motivo</th></tr></thead>
             <tbody id="studentTableBody">
-              <tr><td colspan="7" class="table-empty">Cargá información para construir el seguimiento.</td></tr>
+              <tr><td colspan="8" class="table-empty">Cargá información para construir el seguimiento.</td></tr>
             </tbody>
           </table>
         </div>
@@ -237,7 +267,7 @@
     </section>
 
     <footer>
-      <span>Calificador de Moodle · v1 · Creado por Ing. Emanuel Bombina</span>
+      <span>Calificador de Moodle · v2 en desarrollo · Creado por Ing. Emanuel Bombina</span>
       <span>Procesamiento local y privado</span>
     </footer>
   </main>
