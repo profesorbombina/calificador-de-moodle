@@ -10,6 +10,7 @@ La versión 1 funciona completamente en el navegador: los archivos locales no se
 - La versión 2 se desarrolla en la rama `codex/v2`.
 - Los cambios previstos para la nueva versión están en [`docs/ROADMAP-V2.md`](docs/ROADMAP-V2.md).
 - La tabla de decisión del seguimiento está en [`docs/CRITERIOS-RIESGO.md`](docs/CRITERIOS-RIESGO.md).
+- El flujo para mantener V1 y V2 publicadas está en [`docs/PUBLICACION.md`](docs/PUBLICACION.md).
 - El historial de versiones está en [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Funcionalidades

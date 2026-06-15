@@ -15,6 +15,7 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y l
 - Flujo visual guiado de cinco pasos obligatorios.
 - Soporte de listados de Participantes con 5, 6 o 7 columnas.
 - Configuracion de entregas minimas esperadas y nota de aprobacion.
+- Publicacion simultanea de la version estable y la vista previa V2 mediante GitHub Pages.
 
 ### Cambiado
 
