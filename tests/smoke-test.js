@@ -70,7 +70,7 @@ const rows = [
   ["María", "López", "maria@example.com", 80, "-", "-"]
 ];
 
-const analysis = context.buildAnalysis(rows, participants, "Calificaciones", 3, 2, 60);
+const analysis = context.buildAnalysis(rows, participants, "Calificaciones", 3, 0, 2, 60);
 if (analysis.students.length !== 3) throw new Error("Cantidad de estudiantes incorrecta");
 if (analysis.activities.length !== 3) throw new Error("Cantidad de actividades incorrecta");
 if (analysis.totals.delivered !== 6) throw new Error("No se contaron las entregas textuales");
@@ -81,7 +81,22 @@ if (analysis.totals.riskHigh !== 1 || analysis.totals.riskMedium !== 1 || analys
   throw new Error("Clasificación de riesgos incorrecta");
 }
 
-const failedGrade = context.classifyRisk({ delivered: 3, average: 59, noAccess: false, minimumDeliveries: 2, approvalGrade: 60 });
+const failedGrade = context.classifyRisk({ delivered: 3, average: 59, noAccess: false, highRiskDeliveries: 1, lowRiskDeliveries: 2, approvalGrade: 60 });
 if (failedGrade.status !== "high") throw new Error("Una nota desaprobada debe determinar Riesgo Alto");
+
+const highByDeliveries = context.classifyRisk({ delivered: 3, average: 80, noAccess: false, highRiskDeliveries: 3, lowRiskDeliveries: 7, approvalGrade: 60 });
+const mediumByDeliveries = context.classifyRisk({ delivered: 5, average: 80, noAccess: false, highRiskDeliveries: 3, lowRiskDeliveries: 7, approvalGrade: 60 });
+const lowByDeliveries = context.classifyRisk({ delivered: 7, average: 80, noAccess: false, highRiskDeliveries: 3, lowRiskDeliveries: 7, approvalGrade: 60 });
+if (highByDeliveries.status !== "high" || mediumByDeliveries.status !== "medium" || lowByDeliveries.status !== "low") {
+  throw new Error("Los umbrales de entregas no clasifican correctamente");
+}
+
+const plannedLimitAnalysis = context.buildAnalysis(rows, participants, "Calificaciones", 2, 0, 1, 60);
+if (plannedLimitAnalysis.students.some(student => student.delivered > 2)) {
+  throw new Error("Las entregas consideradas no deben superar las actividades planificadas");
+}
+if (plannedLimitAnalysis.totals.possible !== 6 || plannedLimitAnalysis.totals.delivered !== 5) {
+  throw new Error("El total de entregas no se calculó sobre las actividades planificadas");
+}
 
 console.log("Smoke test OK");

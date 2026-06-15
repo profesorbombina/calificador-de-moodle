@@ -41,7 +41,7 @@
       <div>
         <span class="version-pill">VERSIÓN 2 · FLUJO GUIADO</span>
         <h2>Análisis del Calificador y Participantes de un Curso de Moodle</h2>
-        <p>Completá los cinco pasos guiados y obtené un diagnóstico claro del curso junto con un Excel listo para trabajar.</p>
+        <p>Completá los seis pasos guiados y obtené un diagnóstico claro del curso junto con un Excel listo para trabajar.</p>
       </div>
       <div class="privacy-note">
         <span class="privacy-icon" aria-hidden="true">✓</span>
@@ -119,22 +119,36 @@
         <p class="field-help">Cantidad total de actividades que deberían haberse realizado hasta hoy.</p>
       </article>
 
-      <article class="panel input-panel planned-panel step-card">
+      <article class="panel input-panel planned-panel step-card step-card-danger">
         <span class="step-marker"><strong>4</strong><span>Paso 4</span></span>
         <div class="panel-heading">
           <div>
-            <span class="section-kicker">CRITERIO DE SEGUIMIENTO</span>
-            <h3>Entregas mínimas esperadas</h3>
+            <span class="section-kicker">UMBRAL DE RIESGO ALTO</span>
+            <h3>Máximo de entregas en Riesgo Alto</h3>
           </div>
-          <span id="minimumStatus" class="status-pill neutral">Requerido</span>
+          <span id="highRiskStatus" class="status-pill neutral">Requerido</span>
         </div>
-        <label class="field-label" for="minimumDeliveries">Número entero entre 0 y las actividades del Paso 3</label>
-        <input id="minimumDeliveries" class="number-field" type="number" min="0" max="100" step="1" inputmode="numeric" required placeholder="Ej.: 10">
-        <p class="field-help">Quien alcance esta cantidad de entregas y apruebe tendrá Riesgo Bajo.</p>
+        <label class="field-label" for="highRiskDeliveries">Número entero entre 0 y las actividades del Paso 3</label>
+        <input id="highRiskDeliveries" class="number-field" type="number" min="0" max="100" step="1" inputmode="numeric" required placeholder="Ej.: 3">
+        <p class="field-help">Quien tenga esta cantidad de entregas o menos estará en Riesgo Alto.</p>
       </article>
 
-      <article class="panel input-panel planned-panel step-card">
+      <article class="panel input-panel planned-panel step-card step-card-success">
         <span class="step-marker"><strong>5</strong><span>Paso 5</span></span>
+        <div class="panel-heading">
+          <div>
+            <span class="section-kicker">UMBRAL DE RIESGO BAJO</span>
+            <h3>Mínimo de entregas sin riesgo</h3>
+          </div>
+          <span id="lowRiskStatus" class="status-pill neutral">Requerido</span>
+        </div>
+        <label class="field-label" for="lowRiskDeliveries">Número entero entre 0 y las actividades del Paso 3</label>
+        <input id="lowRiskDeliveries" class="number-field" type="number" min="0" max="100" step="1" inputmode="numeric" required placeholder="Ej.: 7">
+        <p class="field-help">Quien alcance esta cantidad o más y apruebe estará en Riesgo Bajo.</p>
+      </article>
+
+      <article class="panel input-panel planned-panel step-card step-card-info">
+        <span class="step-marker"><strong>6</strong><span>Paso 6</span></span>
         <div class="panel-heading">
           <div>
             <span class="section-kicker">CRITERIO DE APROBACIÓN</span>
@@ -154,9 +168,9 @@
           <p>La aplicación detectará estudiantes, actividades, entregas, promedios y señales de riesgo.</p>
         </div>
         <ul class="check-list">
-          <li><span>✓</span> Riesgo Alto: sin acceso, sin entregas o promedio desaprobado</li>
-          <li><span>✓</span> Riesgo Bajo: accede, cumple entregas mínimas y aprueba</li>
-          <li><span>✓</span> Riesgo Medio: requiere seguimiento preventivo</li>
+          <li><span>✓</span> Riesgo Alto: entregas hasta Paso 4, sin acceso o desaprobado</li>
+          <li><span>✓</span> Riesgo Bajo: entregas desde Paso 5 y promedio aprobado</li>
+          <li><span>✓</span> Riesgo Medio: entregas entre los umbrales configurados</li>
         </ul>
         <button class="button button-primary button-large" id="analyzeBtn" type="button" disabled>
           Analizar curso <span aria-hidden="true">→</span>

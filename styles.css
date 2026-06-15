@@ -150,6 +150,13 @@ button, select { cursor: pointer; }
   height: 3px;
   background: linear-gradient(90deg, var(--green), var(--cyan), transparent 75%);
 }
+.step-card-danger::before { background: linear-gradient(90deg, var(--red), transparent 75%); }
+.step-card-danger .step-marker, .step-card-danger .section-kicker, .step-card-danger .number-field { color: var(--red); }
+.step-card-danger .step-marker strong { border-color: rgba(251, 113, 133, 0.5); color: #240006; background: linear-gradient(135deg, #fb7185, #e11d48); box-shadow: 0 8px 22px rgba(251, 113, 133, 0.2); }
+.step-card-success::before { background: linear-gradient(90deg, var(--green), transparent 75%); }
+.step-card-info::before { background: linear-gradient(90deg, var(--cyan), transparent 75%); }
+.step-card-info .step-marker, .step-card-info .section-kicker, .step-card-info .number-field { color: var(--cyan); }
+.step-card-info .step-marker strong { border-color: rgba(73, 204, 228, 0.5); color: #001b22; background: linear-gradient(135deg, #67e8f9, #22a7c3); box-shadow: 0 8px 22px rgba(73, 204, 228, 0.2); }
 .step-marker {
   position: absolute;
   top: 17px;

@@ -22,8 +22,10 @@ const elements = {
   clearParticipantsBtn: document.querySelector("#clearParticipantsBtn"),
   plannedActivities: document.querySelector("#plannedActivities"),
   plannedStatus: document.querySelector("#plannedStatus"),
-  minimumDeliveries: document.querySelector("#minimumDeliveries"),
-  minimumStatus: document.querySelector("#minimumStatus"),
+  highRiskDeliveries: document.querySelector("#highRiskDeliveries"),
+  highRiskStatus: document.querySelector("#highRiskStatus"),
+  lowRiskDeliveries: document.querySelector("#lowRiskDeliveries"),
+  lowRiskStatus: document.querySelector("#lowRiskStatus"),
   approvalGrade: document.querySelector("#approvalGrade"),
   approvalStatus: document.querySelector("#approvalStatus"),
   sourceStatus: document.querySelector("#sourceStatus"),
@@ -71,7 +73,8 @@ elements.studentSearch.addEventListener("input", applyStudentFilters);
 elements.riskFilter.addEventListener("change", applyStudentFilters);
 elements.averageFilter.addEventListener("change", applyStudentFilters);
 elements.plannedActivities.addEventListener("input", validatePlannedActivities);
-elements.minimumDeliveries.addEventListener("input", validateMinimumDeliveries);
+elements.highRiskDeliveries.addEventListener("input", validateRiskThresholds);
+elements.lowRiskDeliveries.addEventListener("input", validateRiskThresholds);
 elements.approvalGrade.addEventListener("input", validateApprovalGrade);
 elements.fileTab.addEventListener("click", () => selectSourceTab("file"));
 elements.urlTab.addEventListener("click", () => selectSourceTab("url"));
@@ -174,20 +177,27 @@ function validatePlannedActivities() {
   const valid = Number.isInteger(value) && value >= 0 && value <= 100;
   const empty = elements.plannedActivities.value.trim() === "";
   setStatusElement(elements.plannedStatus, valid ? `${value} actividades` : empty ? "Requerido" : "Valor inválido", valid ? "ok" : empty ? "neutral" : "error");
-  validateMinimumDeliveries(false);
+  validateRiskThresholds(false);
   updateAnalyzeButton();
   return valid ? value : null;
 }
 
-function validateMinimumDeliveries(updateButton = true) {
-  const value = parseRequiredInteger(elements.minimumDeliveries.value);
+function validateRiskThresholds(updateButton = true) {
+  const highRisk = parseRequiredInteger(elements.highRiskDeliveries.value);
+  const lowRisk = parseRequiredInteger(elements.lowRiskDeliveries.value);
   const planned = parseRequiredInteger(elements.plannedActivities.value);
-  const valid = Number.isInteger(value) && value >= 0 && value <= 100 && Number.isInteger(planned) && value <= planned;
-  const empty = elements.minimumDeliveries.value.trim() === "";
-  const message = valid ? `${value} entregas` : empty ? "Requerido" : Number.isInteger(planned) ? `Debe estar entre 0 y ${planned}` : "Completá primero el Paso 3";
-  setStatusElement(elements.minimumStatus, message, valid ? "ok" : empty ? "neutral" : "error");
+  const highEmpty = elements.highRiskDeliveries.value.trim() === "";
+  const lowEmpty = elements.lowRiskDeliveries.value.trim() === "";
+  const highValid = Number.isInteger(highRisk) && highRisk >= 0 && Number.isInteger(planned) && highRisk <= planned &&
+    (!Number.isInteger(lowRisk) || highRisk < lowRisk);
+  const lowValid = Number.isInteger(lowRisk) && lowRisk >= 0 && Number.isInteger(planned) && lowRisk <= planned &&
+    (!Number.isInteger(highRisk) || lowRisk > highRisk);
+  const highMessage = highValid ? `Hasta ${highRisk} entregas` : highEmpty ? "Requerido" : Number.isInteger(lowRisk) && highRisk >= lowRisk ? "Debe ser menor al Paso 5" : Number.isInteger(planned) ? `Debe estar entre 0 y ${planned}` : "Completá primero el Paso 3";
+  const lowMessage = lowValid ? `Desde ${lowRisk} entregas` : lowEmpty ? "Requerido" : Number.isInteger(highRisk) && lowRisk <= highRisk ? "Debe ser mayor al Paso 4" : Number.isInteger(planned) ? `Debe estar entre 0 y ${planned}` : "Completá primero el Paso 3";
+  setStatusElement(elements.highRiskStatus, highMessage, highValid ? "ok" : highEmpty ? "neutral" : "error");
+  setStatusElement(elements.lowRiskStatus, lowMessage, lowValid ? "ok" : lowEmpty ? "neutral" : "error");
   if (updateButton) updateAnalyzeButton();
-  return valid ? value : null;
+  return highValid && lowValid ? { highRisk, lowRisk } : null;
 }
 
 function validateApprovalGrade() {
@@ -208,10 +218,12 @@ function updateFormReadiness() {
 function updateAnalyzeButton() {
   const participantsValid = parseMoodleParticipants(elements.participantText.value).length > 0;
   const planned = parseRequiredInteger(elements.plannedActivities.value);
-  const minimum = parseRequiredInteger(elements.minimumDeliveries.value);
+  const highRisk = parseRequiredInteger(elements.highRiskDeliveries.value);
+  const lowRisk = parseRequiredInteger(elements.lowRiskDeliveries.value);
   const approval = parseRequiredInteger(elements.approvalGrade.value);
   const configurationValid = Number.isInteger(planned) && planned >= 0 && planned <= 100 &&
-    Number.isInteger(minimum) && minimum >= 0 && minimum <= planned &&
+    Number.isInteger(highRisk) && highRisk >= 0 && highRisk < lowRisk &&
+    Number.isInteger(lowRisk) && lowRisk <= planned &&
     Number.isInteger(approval) && approval >= 0 && approval <= 100;
   elements.analyzeBtn.disabled = !(state.sourceData && participantsValid && configurationValid);
 }
@@ -224,11 +236,11 @@ function clearParticipants() {
 async function analyzeCourse() {
   if (!state.sourceData) return;
   const plannedActivities = validatePlannedActivities();
-  const minimumDeliveries = validateMinimumDeliveries();
+  const thresholds = validateRiskThresholds();
   const approvalGrade = validateApprovalGrade();
   const participants = parseMoodleParticipants(elements.participantText.value);
-  if (!participants.length || plannedActivities === null || minimumDeliveries === null || approvalGrade === null) {
-    setProcessStatus("Completá correctamente los cinco pasos obligatorios antes de analizar.", "error");
+  if (!participants.length || plannedActivities === null || thresholds === null || approvalGrade === null) {
+    setProcessStatus("Completá correctamente los seis pasos obligatorios antes de analizar.", "error");
     return;
   }
 
@@ -242,7 +254,7 @@ async function analyzeCourse() {
     const workbook = XLSX.read(state.sourceData, { type: "array", cellDates: true });
     const gradeSheetName = detectGradeSheet(workbook);
     const gradeRows = XLSX.utils.sheet_to_json(workbook.Sheets[gradeSheetName], { header: 1, defval: "", raw: true });
-    state.analysis = buildAnalysis(gradeRows, participants, gradeSheetName, plannedActivities, minimumDeliveries, approvalGrade);
+    state.analysis = buildAnalysis(gradeRows, participants, gradeSheetName, plannedActivities, thresholds.highRisk, thresholds.lowRisk, approvalGrade);
 
     renderDashboard(state.analysis);
     elements.downloadBtn.disabled = false;
@@ -270,7 +282,7 @@ function detectGradeSheet(workbook) {
   return workbook.SheetNames[0];
 }
 
-function buildAnalysis(rows, participants, sheetName, plannedActivities = 0, minimumDeliveries = 0, approvalGrade = 0) {
+function buildAnalysis(rows, participants, sheetName, plannedActivities = 0, highRiskDeliveries = 0, lowRiskDeliveries = 0, approvalGrade = 0) {
   if (rows.length < 2) throw new Error("La hoja de calificaciones no contiene datos suficientes");
 
   const headers = rows[0].map(value => String(value || "").trim());
@@ -319,14 +331,15 @@ function buildAnalysis(rows, participants, sheetName, plannedActivities = 0, min
       }
       return submission;
     });
-    const delivered = submissions.filter(submission => submission.delivered).length;
+    const detectedDeliveries = submissions.filter(submission => submission.delivered).length;
+    const delivered = Math.min(detectedDeliveries, plannedActivities);
     const numericGrades = submissions.map(submission => submission.numeric).filter(grade => grade !== null);
     const average = averageOf(numericGrades);
     const participant = participantMap.get(email.toLowerCase()) || {};
     const noAccess = normalizeText(participant.access) === "nunca";
     const expectedActivities = plannedActivities;
     const deliveryRate = expectedActivities > 0 ? Math.min(delivered / expectedActivities, 1) : 0;
-    const risk = classifyRisk({ delivered, average, noAccess, minimumDeliveries, approvalGrade });
+    const risk = classifyRisk({ delivered, average, noAccess, highRiskDeliveries, lowRiskDeliveries, approvalGrade });
 
     students.push({
       name: participant.name || fullName || email,
@@ -336,6 +349,7 @@ function buildAnalysis(rows, participants, sheetName, plannedActivities = 0, min
       access: participant.access || "Sin dato",
       grades: submissions.map(submission => submission.display),
       delivered,
+      detectedDeliveries,
       average,
       deliveryRate,
       status: risk.status,
@@ -363,7 +377,8 @@ function buildAnalysis(rows, participants, sheetName, plannedActivities = 0, min
     sourceName: state.sourceName,
     sourceSheet: sheetName,
     plannedActivities,
-    minimumDeliveries,
+    highRiskDeliveries,
+    lowRiskDeliveries,
     approvalGrade,
     activities,
     students,
@@ -445,10 +460,10 @@ function applyStudentFilters() {
     const matchesAverage = averageMatches(student.average, averageFilter, state.analysis.approvalGrade);
     return matchesText && matchesStatus && matchesAverage;
   });
-  renderStudentTable(state.filteredStudents, state.analysis.activities.length);
+  renderStudentTable(state.filteredStudents, state.analysis.plannedActivities);
 }
 
-function renderStudentTable(students, activityCount) {
+function renderStudentTable(students, plannedActivities) {
   elements.tableCount.textContent = `${students.length} registros`;
   if (!students.length) {
     elements.studentTableBody.innerHTML = '<tr><td colspan="8" class="table-empty">No hay estudiantes que coincidan con el filtro.</td></tr>';
@@ -459,7 +474,7 @@ function renderStudentTable(students, activityCount) {
       <td class="student-name">${escapeHtml(student.name)}</td>
       <td class="muted-cell">${escapeHtml(student.email || "Sin dato")}</td>
       <td class="muted-cell">${escapeHtml(student.group)}</td>
-      <td>${student.delivered} / ${activityCount}</td>
+      <td>${student.delivered} / ${plannedActivities}</td>
       <td>${student.average === null ? "Sin nota" : student.average.toFixed(2)}</td>
       <td class="muted-cell">${escapeHtml(student.access)}</td>
       <td>${statusBadge(student.status, student.riskReason)}</td>
@@ -495,8 +510,9 @@ function buildReportWorkbook(analysis) {
     ["Estudiantes", analysis.students.length, "Cruce con Participantes", analysis.totals.matchedParticipants],
     ["Actividades", analysis.activities.length, "Entregas registradas", analysis.totals.delivered],
     ["Actividades a la fecha", analysis.plannedActivities, "Entregas esperadas", analysis.totals.possible],
-    ["Entregas mínimas", analysis.minimumDeliveries, "Nota de aprobación", analysis.approvalGrade],
-    ["Nivel de entrega", analysis.totals.deliveryRate, "Promedio del Curso", analysis.totals.average ?? ""],
+    ["Riesgo Alto hasta", analysis.highRiskDeliveries, "Riesgo Bajo desde", analysis.lowRiskDeliveries],
+    ["Nota de aprobación", analysis.approvalGrade, "Promedio del Curso", analysis.totals.average ?? ""],
+    ["Nivel de entrega", analysis.totals.deliveryRate, "", ""],
     ["Riesgo Bajo", analysis.totals.riskLow, "Riesgo Medio", analysis.totals.riskMedium],
     ["Riesgo Alto", analysis.totals.riskHigh, "Nunca ingresaron", analysis.totals.noAccess],
     [],
@@ -519,7 +535,7 @@ function buildReportWorkbook(analysis) {
     student.id,
     student.group,
     ...student.grades.map(grade => grade ?? "-"),
-    student.delivered,
+    `${student.delivered} / ${analysis.plannedActivities}`,
     student.average ?? "",
     student.access,
     statusLabel(student.status),
@@ -546,14 +562,14 @@ function styleDashboardSheet(sheet, rowCount) {
       sheet[ref].s = { font: { name: "Aptos", sz: 10, color: { rgb: "FF163238" } }, alignment: { vertical: "center", wrapText: true }, border };
     }
   }
-  ["A1", "A4", "A13"].forEach(ref => {
+  ["A1", "A4", "A14"].forEach(ref => {
     sheet[ref].s.fill = { fgColor: { rgb: "FF087C68" } };
     sheet[ref].s.font = { name: "Aptos Display", bold: true, sz: ref === "A1" ? 18 : 11, color: { rgb: "FFFFFFFF" } };
   });
   sheet["!merges"] = [XLSX.utils.decode_range("A1:D1"), XLSX.utils.decode_range("A4:D4")];
   sheet["!cols"] = [{ wch:28 }, { wch:18 }, { wch:28 }, { wch:18 }];
-  sheet["B9"].z = "0.00%";
-  for (let row = 14; row <= rowCount; row++) sheet[`C${row}`].z = "0.00%";
+  sheet["B10"].z = "0.00%";
+  for (let row = 15; row <= rowCount; row++) sheet[`C${row}`].z = "0.00%";
 }
 
 function styleDataSheet(sheet, colCount, rowCount) {
@@ -653,17 +669,19 @@ function parseSubmission(value) {
   };
 }
 
-function classifyRisk({ delivered, average, noAccess, minimumDeliveries, approvalGrade }) {
+function classifyRisk({ delivered, average, noAccess, highRiskDeliveries, lowRiskDeliveries, approvalGrade }) {
   if (noAccess) return { status: "high", reason: "Nunca ingresó a la plataforma" };
-  if (delivered === 0) return { status: "high", reason: "No realizó entregas" };
   if (average !== null && average < approvalGrade) {
     return { status: "high", reason: `Promedio ${average.toFixed(2)} inferior a la nota de aprobación (${approvalGrade})` };
   }
-  if (delivered >= minimumDeliveries && average !== null && average >= approvalGrade) {
-    return { status: "low", reason: "Ingresó, alcanzó las entregas mínimas y tiene promedio aprobado" };
+  if (delivered <= highRiskDeliveries) {
+    return { status: "high", reason: `Realizó ${delivered} entregas; el Riesgo Alto alcanza hasta ${highRiskDeliveries}` };
+  }
+  if (delivered >= lowRiskDeliveries && average !== null && average >= approvalGrade) {
+    return { status: "low", reason: `Realizó ${delivered} entregas y tiene promedio aprobado` };
   }
   if (average === null) return { status: "medium", reason: "Tiene entregas, pero no dispone de promedio numérico" };
-  return { status: "medium", reason: `Realizó ${delivered} de ${minimumDeliveries} entregas mínimas esperadas` };
+  return { status: "medium", reason: `Realizó ${delivered} entregas; está entre los umbrales de Riesgo Alto y Bajo` };
 }
 
 function averageMatches(average, filter, approvalGrade) {
@@ -756,7 +774,8 @@ function resetApplication() {
   elements.sheetUrl.value = "";
   elements.participantText.value = "";
   elements.plannedActivities.value = "";
-  elements.minimumDeliveries.value = "";
+  elements.highRiskDeliveries.value = "";
+  elements.lowRiskDeliveries.value = "";
   elements.approvalGrade.value = "";
   elements.studentSearch.value = "";
   elements.riskFilter.value = "all";

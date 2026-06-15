@@ -17,7 +17,7 @@ La versión 1 funciona completamente en el navegador: los archivos locales no se
 
 - Importa archivos `.xlsx`, `.xls`, `.ods` y `.csv`.
 - Admite una URL pública o compartida de Google Sheets.
-- Guía al usuario mediante cinco pasos obligatorios y visuales.
+- Guía al usuario mediante seis pasos obligatorios y visuales.
 - Interpreta listados de **Participantes** de Moodle con 5, 6 o 7 columnas.
 - Cruza estudiantes por correo electrónico.
 - Detecta actividades cuyos encabezados incluyen Foro, Cuestionario o Tarea.
@@ -33,10 +33,11 @@ La versión 1 funciona completamente en el navegador: los archivos locales no se
 2. Cargá la exportación del calificador o una URL pública de Google Sheets.
 3. Pegá el listado copiado desde Participantes.
 4. Indicá la cantidad de actividades a realizar a la fecha.
-5. Indicá la cantidad mínima de entregas esperadas.
-6. Indicá la nota de aprobación entre 0 y 100.
-7. Presioná **Analizar curso**.
-8. Revisá el dashboard y descargá el informe.
+5. Indicá el máximo de entregas para Riesgo Alto.
+6. Indicá el mínimo de entregas para Riesgo Bajo.
+7. Indicá la nota de aprobación entre 0 y 100.
+8. Presioná **Analizar curso**.
+9. Revisá el dashboard y descargá el informe.
 
 ## Publicación en GitHub Pages
 

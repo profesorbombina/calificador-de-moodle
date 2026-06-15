@@ -31,11 +31,13 @@ Mantener una aplicación estática, fácil de publicar y capaz de procesar infor
 
 ## Criterio de riesgo
 
-El usuario configura las actividades a la fecha, las entregas mínimas esperadas y la nota de aprobación.
+El usuario configura las actividades a la fecha, el máximo de entregas para Riesgo Alto, el mínimo de entregas para Riesgo Bajo y la nota de aprobación.
 
-- **Riesgo Alto**: nunca ingresó, no realizó entregas o tiene promedio numérico inferior a la nota de aprobación.
-- **Riesgo Bajo**: ingresó, alcanzó las entregas mínimas y tiene promedio numérico igual o superior a la nota de aprobación.
-- **Riesgo Medio**: tiene actividad registrada, pero todavía no reúne todas las condiciones de Riesgo Bajo y tampoco presenta una condición de Riesgo Alto.
+- **Riesgo Alto**: nunca ingresó, tiene entregas iguales o inferiores al umbral alto, o tiene promedio numérico inferior a la nota de aprobación.
+- **Riesgo Bajo**: ingresó, alcanzó o superó el umbral bajo y tiene promedio numérico igual o superior a la nota de aprobación.
+- **Riesgo Medio**: sus entregas están entre ambos umbrales o todavía no dispone de promedio numérico.
+
+El total planificado limita las entregas consideradas y funciona como denominador para todos los porcentajes generales y por estudiante.
 
 Cada estudiante conserva un motivo explicativo. El criterio está aislado dentro de `classifyRisk` para facilitar cambios futuros.
 
