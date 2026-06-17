@@ -86,7 +86,7 @@ button, select { cursor: pointer; }
 }
 
 .brand, .top-actions, .panel-heading, .inline-field, .textarea-footer,
-.dashboard-heading, .dashboard-tools, .metric-card, footer {
+.dashboard-heading, .dashboard-tools, .metric-card, .mail-heading, .mail-card-header, footer {
   display: flex;
   align-items: center;
 }
@@ -130,6 +130,7 @@ button, select { cursor: pointer; }
   box-shadow: 0 9px 28px rgba(43, 224, 177, 0.2);
 }
 .button-ghost { border-color: var(--border); background: rgba(255, 255, 255, 0.04); }
+.button-gmail { color: #102018; background: #f8fafc; border-color: rgba(255,255,255,.58); }
 .button-large { width: 100%; min-height: 54px; font-size: 0.95rem; }
 
 .hero {
@@ -163,7 +164,7 @@ button, select { cursor: pointer; }
   background: linear-gradient(145deg, rgba(13, 27, 35, 0.96), rgba(5, 14, 20, 0.92));
   box-shadow: var(--shadow);
 }
-.input-panel, .action-panel, .insight-panel, .table-panel { padding: 20px; }
+.input-panel, .action-panel, .insight-panel, .table-panel, .mail-card { padding: 20px; }
 .step-card {
   position: relative;
   padding-top: 68px;
@@ -319,6 +320,91 @@ select { min-height: 42px; padding: 0 12px; border-radius: 10px; font-size: 0.72
 .alert-warning .alert-symbol { color: var(--amber); background: rgba(251,191,36,.1); }
 .alert-success .alert-symbol { color: var(--green); background: rgba(43,224,177,.1); }
 
+.mail-section { margin-top: 14px; }
+.mail-heading {
+  justify-content: space-between;
+  gap: 22px;
+  margin-bottom: 14px;
+  padding: 18px 2px 4px;
+}
+.mail-heading h3 { margin: 6px 0 0; font-size: 1.35rem; letter-spacing: -0.035em; }
+.mail-heading p { max-width: 560px; margin: 0; color: var(--muted); font-size: 0.72rem; line-height: 1.6; }
+.mail-settings {
+  display: grid;
+  grid-template-columns: 1fr 1fr minmax(130px, 0.45fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.mail-settings label { display: grid; gap: 6px; }
+.mail-settings span {
+  color: #bed0d5;
+  font-size: 0.66rem;
+  font-weight: 800;
+}
+.mail-settings input, .mail-settings select, .mail-subject {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+}
+.mail-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.mail-card {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  overflow: hidden;
+}
+.mail-card-header {
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 4px;
+}
+.mail-card-header h4 { margin: 4px 0 0; font-size: 0.95rem; letter-spacing: -0.025em; }
+.mail-card-header strong {
+  min-width: max-content;
+  padding: 8px 10px;
+  border-radius: 12px;
+  color: var(--muted);
+  background: rgba(255,255,255,.04);
+  font-size: 0.72rem;
+}
+.mail-card-header strong .count-number {
+  color: var(--text);
+  font-size: 1.28rem;
+  line-height: 1;
+  font-weight: 900;
+}
+.mail-label {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.mail-card-high .mail-label, .mail-card-high .field-label { color: var(--red); }
+.mail-card-medium .mail-label, .mail-card-medium .field-label { color: var(--amber); }
+.mail-card-low .mail-label, .mail-card-low .field-label { color: var(--green); }
+.mail-card-high { border-color: rgba(251,113,133,.22); }
+.mail-card-medium { border-color: rgba(251,191,36,.22); }
+.mail-card-low { border-color: rgba(43,224,177,.22); }
+.mail-subject, .mail-recipients, .mail-body {
+  min-height: 132px;
+  color: #d7e5e8;
+  background: rgba(2, 9, 13, 0.58);
+}
+.mail-subject { min-height: 42px; }
+.mail-body { min-height: 270px; }
+.mail-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.copy-button {
+  width: max-content;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-size: 0.68rem;
+}
+
 .table-panel { margin-top: 14px; }
 .table-count { padding: 6px 9px; color: var(--muted); background: rgba(255,255,255,.04); }
 .table-wrap { overflow: auto; border: 1px solid var(--border); border-radius: 12px; }
@@ -340,11 +426,12 @@ footer { justify-content: space-between; padding: 25px 0 35px; color: var(--mute
 @media (max-width: 1100px) {
   .action-panel { grid-template-columns: 1fr; }
   .metric-grid { grid-template-columns: repeat(2, 1fr); }
+  .mail-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 760px) {
   .app-shell { width: min(100% - 24px, 1500px); }
-  .topbar, .hero, .dashboard-heading { align-items: flex-start; flex-direction: column; }
+  .topbar, .hero, .dashboard-heading, .mail-heading { align-items: flex-start; flex-direction: column; }
   .topbar { padding: 22px 0; }
   .top-actions, .dashboard-tools { width: 100%; }
   .top-actions .button, .dashboard-tools > * { flex: 1; }
@@ -353,6 +440,9 @@ footer { justify-content: space-between; padding: 25px 0 35px; color: var(--mute
   .workspace, .metric-grid, .insight-grid { grid-template-columns: 1fr; }
   .action-panel { grid-column: auto; }
   .dashboard-tools { align-items: stretch; flex-direction: column; }
+  .mail-settings { grid-template-columns: 1fr; }
+  .mail-card-header { align-items: flex-start; flex-direction: column; }
+  .mail-actions .button { flex: 1; min-width: 142px; }
   .search-box { min-width: 0; }
   .metric-card { min-height: 110px; }
   footer { align-items: flex-start; flex-direction: column; gap: 6px; }
@@ -565,6 +655,18 @@ footer { padding-bottom: 20px; }
             <option value="belowApproval">Debajo de aprobación</option>
             <option value="approved">Aprobados</option>
           </select>
+          <select id="signalFilter" aria-label="Filtrar por señal de seguimiento" disabled>
+            <option value="all">Todas las señales</option>
+            <option value="noAccess">Sin ingreso</option>
+            <option value="noDeliveries">Sin entregas</option>
+            <option value="belowAverage">Promedio bajo</option>
+            <option value="noEmail">Sin correo</option>
+          </select>
+          <select id="participantStateFilter" aria-label="Filtrar por estado de usuario" disabled hidden>
+            <option value="all">Todos los estados</option>
+            <option value="active">Activos</option>
+            <option value="suspended">Suspendidos</option>
+          </select>
         </div>
       </div>
 
@@ -609,6 +711,16 @@ footer { padding-bottom: 20px; }
           <div><strong id="metricRiskHigh">0</strong><span>Riesgo Alto</span></div>
           <small>Sin acceso, sin entregas o desaprobado</small>
         </article>
+        <article class="metric-card accent-cyan participant-state-metric" id="activeMetricCard" hidden>
+          <div class="metric-icon">A</div>
+          <div><strong id="metricActive">0</strong><span>Activo</span></div>
+          <small>Estado informado en Participantes</small>
+        </article>
+        <article class="metric-card accent-red participant-state-metric" id="suspendedMetricCard" hidden>
+          <div class="metric-icon">S</div>
+          <div><strong id="metricSuspended">0</strong><span>Suspendido</span></div>
+          <small>Estado informado en Participantes</small>
+        </article>
       </div>
 
       <div class="insight-grid">
@@ -627,6 +739,108 @@ footer { padding-bottom: 20px; }
         </article>
       </div>
 
+      <section class="mail-section" id="mailSection" aria-label="Correos de acompañamiento">
+        <div class="mail-heading">
+          <div>
+            <span class="section-kicker">ACOMPAÑAMIENTO PEDAGÓGICO</span>
+            <h3>Correos listos para copiar</h3>
+          </div>
+          <p>Los destinatarios se agrupan según el riesgo calculado. Personalizá el curso, el docente y el tono antes de copiar o abrir Gmail.</p>
+        </div>
+
+        <div class="mail-settings" aria-label="Personalización de correos">
+          <label>
+            <span>Curso</span>
+            <input id="mailCourseName" type="text" placeholder="Nombre del curso">
+          </label>
+          <label>
+            <span>Docente o equipo</span>
+            <input id="mailTeacherName" type="text" placeholder="Equipo docente">
+          </label>
+          <label>
+            <span>Tono</span>
+            <select id="mailTone">
+              <option value="formal">Formal</option>
+              <option value="close">Cercano</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="mail-grid">
+          <article class="panel mail-card mail-card-high">
+            <div class="mail-card-header">
+              <div>
+                <span class="mail-label">Riesgo Alto</span>
+                <h4>Intervención prioritaria</h4>
+              </div>
+              <strong id="mailHighCount">0 destinatarios</strong>
+            </div>
+            <label class="field-label" for="mailHighSubject">Asunto sugerido</label>
+            <input id="mailHighSubject" class="mail-subject" type="text" readonly>
+            <label class="field-label" for="mailHighRecipients">Correos de estudiantes a contactar</label>
+            <textarea id="mailHighRecipients" class="mail-recipients" readonly placeholder="Sin destinatarios por ahora."></textarea>
+            <div class="mail-actions">
+              <button class="button button-ghost copy-button" type="button" data-copy-target="mailHighRecipients">Copiar correos</button>
+              <button class="button button-ghost copy-button" type="button" data-copy-target="mailHighSubject">Copiar asunto</button>
+            </div>
+            <label class="field-label" for="mailHighBody">Cuerpo sugerido del correo</label>
+            <textarea id="mailHighBody" class="mail-body" readonly></textarea>
+            <div class="mail-actions">
+              <button class="button button-primary copy-button" type="button" data-copy-target="mailHighBody">Copiar cuerpo</button>
+              <button class="button button-gmail copy-button" type="button" data-gmail-group="High">Gmail</button>
+            </div>
+          </article>
+
+          <article class="panel mail-card mail-card-medium">
+            <div class="mail-card-header">
+              <div>
+                <span class="mail-label">Riesgo Medio</span>
+                <h4>Seguimiento preventivo</h4>
+              </div>
+              <strong id="mailMediumCount">0 destinatarios</strong>
+            </div>
+            <label class="field-label" for="mailMediumSubject">Asunto sugerido</label>
+            <input id="mailMediumSubject" class="mail-subject" type="text" readonly>
+            <label class="field-label" for="mailMediumRecipients">Correos de estudiantes a contactar</label>
+            <textarea id="mailMediumRecipients" class="mail-recipients" readonly placeholder="Sin destinatarios por ahora."></textarea>
+            <div class="mail-actions">
+              <button class="button button-ghost copy-button" type="button" data-copy-target="mailMediumRecipients">Copiar correos</button>
+              <button class="button button-ghost copy-button" type="button" data-copy-target="mailMediumSubject">Copiar asunto</button>
+            </div>
+            <label class="field-label" for="mailMediumBody">Cuerpo sugerido del correo</label>
+            <textarea id="mailMediumBody" class="mail-body" readonly></textarea>
+            <div class="mail-actions">
+              <button class="button button-primary copy-button" type="button" data-copy-target="mailMediumBody">Copiar cuerpo</button>
+              <button class="button button-gmail copy-button" type="button" data-gmail-group="Medium">Gmail</button>
+            </div>
+          </article>
+
+          <article class="panel mail-card mail-card-low">
+            <div class="mail-card-header">
+              <div>
+                <span class="mail-label">Riesgo Bajo / Sin riesgo</span>
+                <h4>Reconocimiento y continuidad</h4>
+              </div>
+              <strong id="mailLowCount">0 destinatarios</strong>
+            </div>
+            <label class="field-label" for="mailLowSubject">Asunto sugerido</label>
+            <input id="mailLowSubject" class="mail-subject" type="text" readonly>
+            <label class="field-label" for="mailLowRecipients">Correos de estudiantes a contactar</label>
+            <textarea id="mailLowRecipients" class="mail-recipients" readonly placeholder="Sin destinatarios por ahora."></textarea>
+            <div class="mail-actions">
+              <button class="button button-ghost copy-button" type="button" data-copy-target="mailLowRecipients">Copiar correos</button>
+              <button class="button button-ghost copy-button" type="button" data-copy-target="mailLowSubject">Copiar asunto</button>
+            </div>
+            <label class="field-label" for="mailLowBody">Cuerpo sugerido del correo</label>
+            <textarea id="mailLowBody" class="mail-body" readonly></textarea>
+            <div class="mail-actions">
+              <button class="button button-primary copy-button" type="button" data-copy-target="mailLowBody">Copiar cuerpo</button>
+              <button class="button button-gmail copy-button" type="button" data-gmail-group="Low">Gmail</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
       <article class="panel table-panel">
         <div class="panel-heading compact">
           <div><span class="section-kicker">DETALLE</span><h3>Seguimiento de estudiantes</h3></div>
@@ -634,9 +848,9 @@ footer { padding-bottom: 20px; }
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Estudiante</th><th>Correo</th><th>Grupo</th><th>Entregas</th><th>Promedio</th><th>Último acceso</th><th>Estado</th><th>Motivo</th></tr></thead>
+            <thead><tr><th>Estudiante</th><th>Correo</th><th>Grupo</th><th>Entregas</th><th>Promedio</th><th>Último acceso</th><th>Estado usuario</th><th>Riesgo</th><th>Motivo</th></tr></thead>
             <tbody id="studentTableBody">
-              <tr><td colspan="8" class="table-empty">Cargá información para construir el seguimiento.</td></tr>
+              <tr><td colspan="9" class="table-empty">Cargá información para construir el seguimiento.</td></tr>
             </tbody>
           </table>
         </div>
@@ -689,10 +903,27 @@ const elements = {
   studentSearch: document.querySelector("#studentSearch"),
   riskFilter: document.querySelector("#riskFilter"),
   averageFilter: document.querySelector("#averageFilter"),
+  signalFilter: document.querySelector("#signalFilter"),
+  participantStateFilter: document.querySelector("#participantStateFilter"),
   studentTableBody: document.querySelector("#studentTableBody"),
   tableCount: document.querySelector("#tableCount"),
   activityChart: document.querySelector("#activityChart"),
-  alertsList: document.querySelector("#alertsList")
+  alertsList: document.querySelector("#alertsList"),
+  mailCourseName: document.querySelector("#mailCourseName"),
+  mailTeacherName: document.querySelector("#mailTeacherName"),
+  mailTone: document.querySelector("#mailTone"),
+  mailHighCount: document.querySelector("#mailHighCount"),
+  mailMediumCount: document.querySelector("#mailMediumCount"),
+  mailLowCount: document.querySelector("#mailLowCount"),
+  mailHighSubject: document.querySelector("#mailHighSubject"),
+  mailMediumSubject: document.querySelector("#mailMediumSubject"),
+  mailLowSubject: document.querySelector("#mailLowSubject"),
+  mailHighRecipients: document.querySelector("#mailHighRecipients"),
+  mailMediumRecipients: document.querySelector("#mailMediumRecipients"),
+  mailLowRecipients: document.querySelector("#mailLowRecipients"),
+  mailHighBody: document.querySelector("#mailHighBody"),
+  mailMediumBody: document.querySelector("#mailMediumBody"),
+  mailLowBody: document.querySelector("#mailLowBody")
 };
 
 const metricElements = {
@@ -708,7 +939,11 @@ const metricElements = {
   averageNote: document.querySelector("#metricAverageNote"),
   riskLow: document.querySelector("#metricRiskLow"),
   riskMedium: document.querySelector("#metricRiskMedium"),
-  riskHigh: document.querySelector("#metricRiskHigh")
+  riskHigh: document.querySelector("#metricRiskHigh"),
+  active: document.querySelector("#metricActive"),
+  suspended: document.querySelector("#metricSuspended"),
+  activeCard: document.querySelector("#activeMetricCard"),
+  suspendedCard: document.querySelector("#suspendedMetricCard")
 };
 
 const ACCEPTED_EXTENSIONS = /\.(xlsx|xls|ods|csv)$/i;
@@ -723,6 +958,11 @@ elements.clearParticipantsBtn.addEventListener("click", clearParticipants);
 elements.studentSearch.addEventListener("input", applyStudentFilters);
 elements.riskFilter.addEventListener("change", applyStudentFilters);
 elements.averageFilter.addEventListener("change", applyStudentFilters);
+elements.signalFilter.addEventListener("change", applyStudentFilters);
+elements.participantStateFilter.addEventListener("change", applyStudentFilters);
+elements.mailCourseName.addEventListener("input", refreshMailFromFilters);
+elements.mailTeacherName.addEventListener("input", refreshMailFromFilters);
+elements.mailTone.addEventListener("change", refreshMailFromFilters);
 elements.plannedActivities.addEventListener("input", validatePlannedActivities);
 elements.highRiskDeliveries.addEventListener("input", validateRiskThresholds);
 elements.lowRiskDeliveries.addEventListener("input", validateRiskThresholds);
@@ -730,6 +970,12 @@ elements.approvalGrade.addEventListener("input", validateApprovalGrade);
 elements.fileTab.addEventListener("click", () => selectSourceTab("file"));
 elements.urlTab.addEventListener("click", () => selectSourceTab("url"));
 elements.participantText.addEventListener("input", updateParticipantStatus);
+document.querySelectorAll("[data-copy-target]").forEach(button => {
+  button.addEventListener("click", () => copyFieldValue(button.dataset.copyTarget, button));
+});
+document.querySelectorAll("[data-gmail-group]").forEach(button => {
+  button.addEventListener("click", () => openGmailDraft(button.dataset.gmailGroup));
+});
 
 ["dragenter", "dragover"].forEach(eventName => {
   elements.dropzone.addEventListener(eventName, event => {
@@ -912,6 +1158,9 @@ async function analyzeCourse() {
     elements.studentSearch.disabled = false;
     elements.riskFilter.disabled = false;
     elements.averageFilter.disabled = false;
+    elements.signalFilter.disabled = false;
+    elements.participantStateFilter.disabled = !state.analysis.hasParticipantStates;
+    elements.participantStateFilter.hidden = !state.analysis.hasParticipantStates;
     setProcessStatus(`Análisis listo: ${state.analysis.students.length} estudiantes y ${state.analysis.activities.length} actividades.`, "ok");
     elements.dashboard.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (error) {
@@ -988,6 +1237,7 @@ function buildAnalysis(rows, participants, sheetName, plannedActivities = 0, hig
     const average = averageOf(numericGrades);
     const participant = participantMap.get(email.toLowerCase()) || {};
     const noAccess = normalizeText(participant.access) === "nunca";
+    const participantState = normalizeParticipantState(participant.status);
     const expectedActivities = plannedActivities;
     const deliveryRate = expectedActivities > 0 ? Math.min(delivered / expectedActivities, 1) : 0;
     const risk = classifyRisk({ delivered, average, noAccess, highRiskDeliveries, lowRiskDeliveries, approvalGrade });
@@ -998,6 +1248,8 @@ function buildAnalysis(rows, participants, sheetName, plannedActivities = 0, hig
       id: indexes.id >= 0 ? row[indexes.id] : "",
       group: participant.groups || "Sin grupo",
       access: participant.access || "Sin dato",
+      participantStatus: participant.status || "Sin dato",
+      participantState,
       grades: submissions.map(submission => submission.display),
       delivered,
       detectedDeliveries,
@@ -1020,6 +1272,9 @@ function buildAnalysis(rows, participants, sheetName, plannedActivities = 0, hig
   const riskHigh = students.filter(student => student.status === "high").length;
   const noAccessCount = students.filter(student => normalizeText(student.access) === "nunca").length;
   const matchedParticipants = students.filter(student => participantMap.has(student.email.toLowerCase())).length;
+  const activeCount = students.filter(student => student.participantState === "active").length;
+  const suspendedCount = students.filter(student => student.participantState === "suspended").length;
+  const hasParticipantStates = students.some(student => student.participantState !== "unknown");
   // El promedio del curso pondera cada calificación numérica registrada por igual.
   const courseAverage = averageOf(activities.flatMap(activity => activity.grades));
 
@@ -1033,6 +1288,7 @@ function buildAnalysis(rows, participants, sheetName, plannedActivities = 0, hig
     approvalGrade,
     activities,
     students,
+    hasParticipantStates,
     totals: {
       delivered: totalDelivered,
       possible: totalPossible,
@@ -1042,12 +1298,19 @@ function buildAnalysis(rows, participants, sheetName, plannedActivities = 0, hig
       riskMedium,
       riskHigh,
       noAccess: noAccessCount,
-      matchedParticipants
+      matchedParticipants,
+      active: activeCount,
+      suspended: suspendedCount
     }
   };
 }
 
 function renderDashboard(analysis) {
+  toggleParticipantStateControls(analysis);
+  applyStudentFilters();
+}
+
+function renderDashboardPanels(analysis) {
   const { students, activities, totals } = analysis;
   metricElements.students.textContent = students.length;
   metricElements.studentsNote.textContent = `${totals.matchedParticipants} cruzados con Participantes`;
@@ -1062,10 +1325,12 @@ function renderDashboard(analysis) {
   metricElements.riskLow.textContent = totals.riskLow;
   metricElements.riskMedium.textContent = totals.riskMedium;
   metricElements.riskHigh.textContent = totals.riskHigh;
+  metricElements.active.textContent = totals.active;
+  metricElements.suspended.textContent = totals.suspended;
 
   renderActivityChart(activities, students.length);
   renderAlerts(analysis);
-  applyStudentFilters();
+  renderMailSection(analysis);
 }
 
 function renderActivityChart(activities, studentCount) {
@@ -1082,6 +1347,16 @@ function renderActivityChart(activities, studentCount) {
 }
 
 function renderAlerts(analysis) {
+  const alerts = collectAlerts(analysis);
+  elements.alertsList.classList.remove("empty-state");
+  elements.alertsList.innerHTML = alerts.map(([type, symbol, title, text]) => `
+    <div class="alert-item alert-${type}">
+      <span class="alert-symbol">${symbol}</span>
+      <div><strong>${escapeHtml(title)}</strong><span>${escapeHtml(text)}</span></div>
+    </div>`).join("");
+}
+
+function collectAlerts(analysis) {
   const { students, activities, totals } = analysis;
   const weakActivities = activities.filter(activity => activity.delivered / Math.max(students.length, 1) < 0.5);
   const alerts = [];
@@ -1091,13 +1366,112 @@ function renderAlerts(analysis) {
   if (totals.riskHigh) alerts.push(["danger", "!", `${totals.riskHigh} estudiantes en Riesgo Alto`, "No ingresaron, no entregaron actividades o su promedio está desaprobado."]);
   if (totals.deliveryRate >= 0.75) alerts.push(["success", "✓", "Buen nivel de participación", `El curso alcanza ${formatPercent(totals.deliveryRate)} de entregas.`]);
   if (!alerts.length) alerts.push(["success", "✓", "Sin alertas críticas", "El análisis no encontró señales prioritarias."]);
+  return alerts;
+}
 
-  elements.alertsList.classList.remove("empty-state");
-  elements.alertsList.innerHTML = alerts.map(([type, symbol, title, text]) => `
-    <div class="alert-item alert-${type}">
-      <span class="alert-symbol">${symbol}</span>
-      <div><strong>${escapeHtml(title)}</strong><span>${escapeHtml(text)}</span></div>
-    </div>`).join("");
+function renderMailSection(analysis) {
+  const groups = {
+    high: analysis.students.filter(student => student.status === "high" && student.email),
+    medium: analysis.students.filter(student => student.status === "medium" && student.email),
+    low: analysis.students.filter(student => student.status === "low" && student.email)
+  };
+
+  setMailGroup("High", groups.high, buildMailSubject("high"), buildMailBody("high", analysis));
+  setMailGroup("Medium", groups.medium, buildMailSubject("medium"), buildMailBody("medium", analysis));
+  setMailGroup("Low", groups.low, buildMailSubject("low"), buildMailBody("low", analysis));
+}
+
+function setMailGroup(key, students, subject, body) {
+  const uniqueEmails = [...new Set(students.map(student => student.email.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+  elements[`mail${key}Count`].innerHTML = `<span class="count-number">${uniqueEmails.length}</span> destinatario${uniqueEmails.length === 1 ? "" : "s"}`;
+  elements[`mail${key}Subject`].value = subject;
+  elements[`mail${key}Recipients`].value = uniqueEmails.join(", ");
+  elements[`mail${key}Body`].value = body;
+}
+
+function buildMailSubject(status) {
+  const courseName = getMailCourseName();
+  const suffix = courseName ? ` - ${courseName}` : "";
+  const subjects = {
+    high: `Seguimiento prioritario en Moodle${suffix}`,
+    medium: `Seguimiento preventivo de cursada${suffix}`,
+    low: `Continuidad y reconocimiento de participación${suffix}`
+  };
+  return subjects[status];
+}
+
+function buildMailBody(status, analysis) {
+  const courseName = getMailCourseName();
+  const teacherName = getMailTeacherName();
+  const courseReference = courseName ? ` del curso ${courseName}` : " del aula virtual";
+  const courseContext = `Al revisar el seguimiento${courseReference}, se consideraron ${analysis.plannedActivities} actividades planificadas hasta la fecha y una nota de aprobación de ${analysis.approvalGrade}.`;
+  const signatures = `Saludos cordiales.\n\n${teacherName}`;
+  const formal = elements.mailTone.value === "formal";
+  const greeting = formal ? "Estimados/as estudiantes:" : "Hola a todos/as:";
+  const closeInvite = formal ? "por favor comuníquense" : "escríbannos";
+  const bodies = {
+    high: `${greeting}\n\nEspero que se encuentren bien. ${courseContext}\n\nEl registro muestra que necesitan una intervención prioritaria para sostener la continuidad en la cursada. Les pedimos que ingresen a Moodle a la brevedad, revisen las actividades pendientes y regularicen las entregas posibles.\n\nSi tuvieron dificultades de acceso, organización, comprensión de consignas o cualquier otra situación que esté afectando su participación, ${closeInvite} con el equipo docente para poder acompañarlos/as y acordar una estrategia de recuperación.\n\nEs importante retomar la actividad en el aula virtual cuanto antes para evitar que se acumulen nuevas tareas y para fortalecer el proceso de aprendizaje.\n\n${signatures}`,
+    medium: `${greeting}\n\nEspero que se encuentren bien. ${courseContext}\n\nEl seguimiento indica participación parcial o algunos indicadores que conviene atender para sostener una trayectoria regular. Les recomendamos ingresar a Moodle, revisar las actividades realizadas y completar aquellas que todavía estén pendientes.\n\nTambién los/as invitamos a consultar con el equipo docente si necesitan orientación sobre consignas, plazos, materiales o formas de entrega. La intención de este mensaje es acompañar preventivamente y evitar que pequeñas demoras se transformen en dificultades mayores.\n\nContinuar con una participación frecuente les permitirá fortalecer los aprendizajes y llegar en mejores condiciones a las próximas instancias del curso.\n\n${signatures}`,
+    low: `${greeting}\n\nEspero que se encuentren bien. ${courseContext}\n\nEl seguimiento muestra una participación adecuada en la plataforma y un avance favorable en las actividades propuestas. Queremos reconocer el compromiso sostenido y alentarlos/as a continuar con este ritmo de trabajo.\n\nLes sugerimos seguir ingresando periódicamente a Moodle, revisar las novedades del aula y mantener al día las próximas entregas. Ante cualquier duda o dificultad, pueden comunicarse con el equipo docente para recibir orientación.\n\nLa continuidad en la participación es clave para consolidar los aprendizajes y transitar el curso de manera organizada.\n\n${signatures}`
+  };
+  return bodies[status];
+}
+
+function getMailCourseName() {
+  return elements.mailCourseName.value.trim();
+}
+
+function getMailTeacherName() {
+  return elements.mailTeacherName.value.trim() || "Equipo docente";
+}
+
+function refreshMailFromFilters() {
+  if (!state.analysis) return;
+  renderMailSection(buildFilteredAnalysis(state.analysis, state.filteredStudents));
+}
+
+async function copyFieldValue(targetId, button) {
+  const field = document.querySelector(`#${targetId}`);
+  if (!field || !field.value.trim()) {
+    setProcessStatus("No hay contenido para copiar en ese bloque.", "error");
+    return;
+  }
+
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(field.value);
+    } else {
+      field.focus();
+      field.select();
+      document.execCommand("copy");
+      field.setSelectionRange(0, 0);
+    }
+    const originalText = button.textContent;
+    button.textContent = "Copiado";
+    setProcessStatus("Contenido copiado al portapapeles.", "ok");
+    setTimeout(() => { button.textContent = originalText; }, 1400);
+  } catch (error) {
+    setProcessStatus("No se pudo copiar automaticamente. Selecciona el texto y copialo manualmente.", "error");
+  }
+}
+
+function openGmailDraft(key) {
+  const recipients = elements[`mail${key}Recipients`].value.trim();
+  const subject = elements[`mail${key}Subject`].value.trim();
+  const body = elements[`mail${key}Body`].value.trim();
+  if (!recipients || !body) {
+    setProcessStatus("No hay destinatarios suficientes para abrir Gmail en ese grupo.", "error");
+    return;
+  }
+
+  const url = new URL("https://mail.google.com/mail/");
+  url.searchParams.set("view", "cm");
+  url.searchParams.set("fs", "1");
+  url.searchParams.set("to", recipients);
+  url.searchParams.set("su", subject);
+  url.searchParams.set("body", body);
+  window.open(url.toString(), "_blank", "noopener");
+  setProcessStatus("Gmail se abrió con destinatarios, asunto y cuerpo cargados.", "ok");
 }
 
 function applyStudentFilters() {
@@ -1105,19 +1479,25 @@ function applyStudentFilters() {
   const query = normalizeText(elements.studentSearch.value);
   const status = elements.riskFilter.value;
   const averageFilter = elements.averageFilter.value;
+  const signalFilter = elements.signalFilter.value;
+  const participantState = state.analysis.hasParticipantStates ? elements.participantStateFilter.value : "all";
   state.filteredStudents = state.analysis.students.filter(student => {
-    const matchesText = !query || normalizeText(`${student.name} ${student.email} ${student.group}`).includes(query);
+    const matchesText = !query || normalizeText(`${student.name} ${student.email} ${student.group} ${student.participantStatus}`).includes(query);
     const matchesStatus = status === "all" || student.status === status;
     const matchesAverage = averageMatches(student.average, averageFilter, state.analysis.approvalGrade);
-    return matchesText && matchesStatus && matchesAverage;
+    const matchesSignal = signalMatches(student, signalFilter, state.analysis.approvalGrade);
+    const matchesParticipantState = participantState === "all" || student.participantState === participantState;
+    return matchesText && matchesStatus && matchesAverage && matchesSignal && matchesParticipantState;
   });
+  const filteredAnalysis = buildFilteredAnalysis(state.analysis, state.filteredStudents);
+  renderDashboardPanels(filteredAnalysis);
   renderStudentTable(state.filteredStudents, state.analysis.plannedActivities);
 }
 
 function renderStudentTable(students, plannedActivities) {
   elements.tableCount.textContent = `${students.length} registros`;
   if (!students.length) {
-    elements.studentTableBody.innerHTML = '<tr><td colspan="8" class="table-empty">No hay estudiantes que coincidan con el filtro.</td></tr>';
+    elements.studentTableBody.innerHTML = '<tr><td colspan="9" class="table-empty">No hay estudiantes que coincidan con el filtro.</td></tr>';
     return;
   }
   elements.studentTableBody.innerHTML = students.map(student => `
@@ -1128,6 +1508,7 @@ function renderStudentTable(students, plannedActivities) {
       <td>${student.delivered} / ${plannedActivities}</td>
       <td>${student.average === null ? "Sin nota" : student.average.toFixed(2)}</td>
       <td class="muted-cell">${escapeHtml(student.access)}</td>
+      <td class="muted-cell">${escapeHtml(student.participantStatus)}</td>
       <td>${statusBadge(student.status, student.riskReason)}</td>
       <td class="reason-cell">${escapeHtml(student.riskReason)}</td>
     </tr>`).join("");
@@ -1157,15 +1538,16 @@ function buildReportWorkbook(analysis) {
     ["INFORME DEL CURSO", "", "", ""],
     ["Generado", analysis.generatedAt.toLocaleString("es-AR"), "Fuente", analysis.sourceName],
     [],
-    ["INDICADOR", "VALOR", "DETALLE", ""],
-    ["Estudiantes", analysis.students.length, "Cruce con Participantes", analysis.totals.matchedParticipants],
-    ["Actividades", analysis.activities.length, "Entregas registradas", analysis.totals.delivered],
-    ["Actividades a la fecha", analysis.plannedActivities, "Entregas esperadas", analysis.totals.possible],
-    ["Riesgo Alto hasta", analysis.highRiskDeliveries, "Riesgo Bajo desde", analysis.lowRiskDeliveries],
-    ["Nota de aprobación", analysis.approvalGrade, "Promedio del Curso", analysis.totals.average ?? ""],
-    ["Nivel de entrega", analysis.totals.deliveryRate, "", ""],
-    ["Riesgo Bajo", analysis.totals.riskLow, "Riesgo Medio", analysis.totals.riskMedium],
-    ["Riesgo Alto", analysis.totals.riskHigh, "Nunca ingresaron", analysis.totals.noAccess],
+    ["ESTUDIANTES", "VALOR", "ACTIVIDADES", "VALOR"],
+    ["Total de estudiantes analizados", analysis.students.length, "Total de actividades detectadas", analysis.activities.length],
+    ["Estudiantes cruzados con Participantes", analysis.totals.matchedParticipants, "Actividades a realizar a la fecha", analysis.plannedActivities],
+    ["Estudiantes con Riesgo Bajo", analysis.totals.riskLow, "Entregas registradas", analysis.totals.delivered],
+    ["Estudiantes con Riesgo Medio", analysis.totals.riskMedium, "Entregas esperadas", analysis.totals.possible],
+    ["Estudiantes con Riesgo Alto", analysis.totals.riskHigh, "Nivel de entrega del curso", analysis.totals.deliveryRate],
+    ["Estudiantes que nunca ingresaron", analysis.totals.noAccess, "Promedio del Curso", analysis.totals.average ?? ""],
+    ["Estudiantes activos", analysis.totals.active, "Riesgo Alto hasta entregas", analysis.highRiskDeliveries],
+    ["Estudiantes suspendidos", analysis.totals.suspended, "Riesgo Bajo desde entregas", analysis.lowRiskDeliveries],
+    ["Nota de aprobación configurada", analysis.approvalGrade, "", ""],
     [],
     ["ACTIVIDAD", "ENTREGAS", "PARTICIPACIÓN", "PROMEDIO"],
     ...analysis.activities.map(activity => [
@@ -1179,7 +1561,7 @@ function buildReportWorkbook(analysis) {
   styleDashboardSheet(dashboardSheet, dashboardData.length);
   XLSX.utils.book_append_sheet(workbook, dashboardSheet, "Dashboard");
 
-  const gradeHeaders = ["Nombre", "Correo", "ID", "Grupo", ...analysis.activities.map(activity => activity.name), "Entregas", "Promedio", "Último acceso", "Estado", "Motivo"];
+  const gradeHeaders = ["Nombre", "Correo", "ID", "Grupo", ...analysis.activities.map(activity => activity.name), "Entregas", "Promedio", "Último acceso", "Estado usuario", "Riesgo", "Motivo"];
   const gradeRows = analysis.students.map(student => [
     student.name,
     student.email,
@@ -1189,6 +1571,7 @@ function buildReportWorkbook(analysis) {
     `${student.delivered} / ${analysis.plannedActivities}`,
     student.average ?? "",
     student.access,
+    student.participantStatus,
     statusLabel(student.status),
     student.riskReason
   ]);
@@ -1196,12 +1579,64 @@ function buildReportWorkbook(analysis) {
   styleDataSheet(gradeSheet, gradeHeaders.length, gradeRows.length + 1);
   XLSX.utils.book_append_sheet(workbook, gradeSheet, "Calificaciones");
 
-  const trackingHeaders = ["Nombre y Apellido", "Correo", "Grupo", "Último acceso", "Estado", "Motivo"];
-  const trackingRows = analysis.students.map(student => [student.name, student.email, student.group, student.access, statusLabel(student.status), student.riskReason]);
+  const trackingHeaders = ["Nombre y Apellido", "Correo", "Grupo", "Último acceso", "Estado usuario", "Riesgo", "Motivo"];
+  const trackingRows = analysis.students.map(student => [student.name, student.email, student.group, student.access, student.participantStatus, statusLabel(student.status), student.riskReason]);
   const trackingSheet = XLSX.utils.aoa_to_sheet([trackingHeaders, ...trackingRows]);
   styleDataSheet(trackingSheet, trackingHeaders.length, trackingRows.length + 1);
   XLSX.utils.book_append_sheet(workbook, trackingSheet, "Seguimiento");
+
+  const alertRows = [["Tipo", "Señal", "Detalle"], ...collectAlerts(analysis).map(([type, , title, text]) => [alertTypeLabel(type), title, text])];
+  const alertSheet = XLSX.utils.aoa_to_sheet(alertRows);
+  styleDataSheet(alertSheet, 3, alertRows.length);
+  alertSheet["!cols"] = [{ wch: 18 }, { wch: 36 }, { wch: 80 }];
+  XLSX.utils.book_append_sheet(workbook, alertSheet, "Alertas");
+
+  const coordinationRows = buildCoordinationReportRows(analysis);
+  const coordinationSheet = XLSX.utils.aoa_to_sheet(coordinationRows);
+  styleDataSheet(coordinationSheet, 2, coordinationRows.length);
+  coordinationSheet["!cols"] = [{ wch: 34 }, { wch: 95 }];
+  XLSX.utils.book_append_sheet(workbook, coordinationSheet, "Reporte coordinación");
+
+  const mailRows = buildMailExportRows(analysis);
+  const mailSheet = XLSX.utils.aoa_to_sheet(mailRows);
+  styleDataSheet(mailSheet, 5, mailRows.length);
+  mailSheet["!cols"] = [{ wch: 30 }, { wch: 14 }, { wch: 48 }, { wch: 42 }, { wch: 90 }];
+  XLSX.utils.book_append_sheet(workbook, mailSheet, "Correos");
+
   return workbook;
+}
+
+function buildCoordinationReportRows(analysis) {
+  return [
+    ["Reporte para coordinación", "Síntesis del seguimiento del curso"],
+    ["Fecha de generación", analysis.generatedAt.toLocaleString("es-AR")],
+    ["Fuente", analysis.sourceName],
+    ["Resumen de estudiantes", `${analysis.students.length} estudiantes analizados. ${analysis.totals.riskHigh} con Riesgo Alto, ${analysis.totals.riskMedium} con Riesgo Medio y ${analysis.totals.riskLow} con Riesgo Bajo.`],
+    ["Resumen de actividades", `${analysis.activities.length} actividades detectadas. Se esperaban ${analysis.totals.possible} entregas y se registraron ${analysis.totals.delivered}, equivalente al ${formatPercent(analysis.totals.deliveryRate)}.`],
+    ["Promedio del Curso", analysis.totals.average === null ? "Sin calificaciones numéricas suficientes" : analysis.totals.average.toFixed(2)],
+    ["Señales prioritarias", collectAlerts(analysis).map(([, , title, text]) => `${title}: ${text}`).join("\n")],
+    ["Sugerencia de acción", "Priorizar contacto con estudiantes sin ingreso, sin entregas o con promedio inferior a la nota de aprobación. Usar la hoja Correos para copiar destinatarios, asunto y cuerpo sugerido."]
+  ];
+}
+
+function alertTypeLabel(type) {
+  if (type === "danger") return "Prioritaria";
+  if (type === "warning") return "Atención";
+  return "Informativa";
+}
+
+function buildMailExportRows(analysis) {
+  const groups = [
+    ["Estudiantes con Riesgo Alto", analysis.students.filter(student => student.status === "high" && student.email), buildMailSubject("high"), buildMailBody("high", analysis)],
+    ["Estudiantes con Riesgo Medio", analysis.students.filter(student => student.status === "medium" && student.email), buildMailSubject("medium"), buildMailBody("medium", analysis)],
+    ["Estudiantes con Riesgo Bajo", analysis.students.filter(student => student.status === "low" && student.email), buildMailSubject("low"), buildMailBody("low", analysis)]
+  ];
+  const rows = [["Grupo", "Destinatarios", "Correos", "Asunto sugerido", "Cuerpo sugerido"]];
+  for (const [label, students, subject, body] of groups) {
+    const emails = [...new Set(students.map(student => student.email.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+    rows.push([label, emails.length, emails.join("; "), subject, body]);
+  }
+  return rows;
 }
 
 function styleDashboardSheet(sheet, rowCount) {
@@ -1213,14 +1648,18 @@ function styleDashboardSheet(sheet, rowCount) {
       sheet[ref].s = { font: { name: "Aptos", sz: 10, color: { rgb: "FF163238" } }, alignment: { vertical: "center", wrapText: true }, border };
     }
   }
-  ["A1", "A4", "A14"].forEach(ref => {
+  ["A1", "A4", "B4", "C4", "D4", "A15", "B15", "C15", "D15"].forEach(ref => {
     sheet[ref].s.fill = { fgColor: { rgb: "FF087C68" } };
     sheet[ref].s.font = { name: "Aptos Display", bold: true, sz: ref === "A1" ? 18 : 11, color: { rgb: "FFFFFFFF" } };
   });
-  sheet["!merges"] = [XLSX.utils.decode_range("A1:D1"), XLSX.utils.decode_range("A4:D4")];
+  sheet["!merges"] = [XLSX.utils.decode_range("A1:D1")];
   sheet["!cols"] = [{ wch:28 }, { wch:18 }, { wch:28 }, { wch:18 }];
-  sheet["B10"].z = "0.00%";
-  for (let row = 15; row <= rowCount; row++) sheet[`C${row}`].z = "0.00%";
+  if (sheet["D9"]) sheet["D9"].z = "0.00%";
+  if (sheet["D10"]) sheet["D10"].z = "0.00";
+  for (let row = 16; row <= rowCount; row++) {
+    if (sheet[`C${row}`]) sheet[`C${row}`].z = "0.00%";
+    if (sheet[`D${row}`]) sheet[`D${row}`].z = "0.00";
+  }
 }
 
 function styleDataSheet(sheet, colCount, rowCount) {
@@ -1335,6 +1774,65 @@ function classifyRisk({ delivered, average, noAccess, highRiskDeliveries, lowRis
   return { status: "medium", reason: `Realizó ${delivered} entregas; está entre los umbrales de Riesgo Alto y Bajo` };
 }
 
+function buildFilteredAnalysis(analysis, students) {
+  const activities = analysis.activities.map((activity, activityIndex) => {
+    const grades = [];
+    let textualDeliveries = 0;
+    let delivered = 0;
+    for (const student of students) {
+      const parsed = parseSubmission(student.grades[activityIndex]);
+      if (!parsed.delivered) continue;
+      delivered += 1;
+      if (parsed.numeric !== null) grades.push(parsed.numeric);
+      else textualDeliveries += 1;
+    }
+    return { ...activity, delivered, grades, textualDeliveries };
+  });
+  const totalPossible = students.length * analysis.plannedActivities;
+  const totalDelivered = students.reduce((sum, student) => sum + student.delivered, 0);
+  const riskLow = students.filter(student => student.status === "low").length;
+  const riskMedium = students.filter(student => student.status === "medium").length;
+  const riskHigh = students.filter(student => student.status === "high").length;
+  const noAccessCount = students.filter(student => normalizeText(student.access) === "nunca").length;
+  const matchedParticipants = students.filter(student => normalizeText(student.access) !== "sin dato" || normalizeText(student.participantStatus) !== "sin dato").length;
+  return {
+    ...analysis,
+    activities,
+    students,
+    totals: {
+      ...analysis.totals,
+      delivered: totalDelivered,
+      possible: totalPossible,
+      deliveryRate: totalPossible ? Math.min(totalDelivered / totalPossible, 1) : 0,
+      average: averageOf(activities.flatMap(activity => activity.grades)),
+      riskLow,
+      riskMedium,
+      riskHigh,
+      noAccess: noAccessCount,
+      matchedParticipants,
+      active: students.filter(student => student.participantState === "active").length,
+      suspended: students.filter(student => student.participantState === "suspended").length
+    }
+  };
+}
+
+function signalMatches(student, filter, approvalGrade) {
+  if (filter === "all") return true;
+  if (filter === "noAccess") return normalizeText(student.access) === "nunca";
+  if (filter === "noDeliveries") return student.delivered === 0;
+  if (filter === "belowAverage") return student.average !== null && student.average < approvalGrade;
+  if (filter === "noEmail") return !student.email;
+  return true;
+}
+
+function toggleParticipantStateControls(analysis) {
+  metricElements.activeCard.hidden = !analysis.hasParticipantStates;
+  metricElements.suspendedCard.hidden = !analysis.hasParticipantStates;
+  elements.participantStateFilter.hidden = !analysis.hasParticipantStates;
+  elements.participantStateFilter.disabled = !analysis.hasParticipantStates;
+  if (!analysis.hasParticipantStates) elements.participantStateFilter.value = "all";
+}
+
 function averageMatches(average, filter, approvalGrade) {
   if (filter === "all") return true;
   if (filter === "none") return average === null;
@@ -1350,6 +1848,17 @@ function averageOf(values) {
 
 function statusLabel(status) {
   return status === "low" ? "Riesgo Bajo" : status === "medium" ? "Riesgo Medio" : "Riesgo Alto";
+}
+
+function statusExportLabel(status) {
+  return status === "low" ? "Estudiantes con Riesgo Bajo" : status === "medium" ? "Estudiantes con Riesgo Medio" : "Estudiantes con Riesgo Alto";
+}
+
+function normalizeParticipantState(value) {
+  const text = normalizeText(value);
+  if (["activo", "activa", "active"].includes(text)) return "active";
+  if (["suspendido", "suspendida", "suspended", "inactivo", "inactiva", "inactive"].includes(text)) return "suspended";
+  return "unknown";
 }
 
 function normalizeText(value) {
@@ -1431,11 +1940,19 @@ function resetApplication() {
   elements.studentSearch.value = "";
   elements.riskFilter.value = "all";
   elements.averageFilter.value = "all";
+  elements.signalFilter.value = "all";
+  elements.participantStateFilter.value = "all";
+  elements.mailCourseName.value = "";
+  elements.mailTeacherName.value = "";
+  elements.mailTone.value = "formal";
   elements.analyzeBtn.disabled = true;
   elements.downloadBtn.disabled = true;
   elements.studentSearch.disabled = true;
   elements.riskFilter.disabled = true;
   elements.averageFilter.disabled = true;
+  elements.signalFilter.disabled = true;
+  elements.participantStateFilter.disabled = true;
+  elements.participantStateFilter.hidden = true;
   setStatus("source", "Pendiente", "neutral");
   updateParticipantStatus();
   setProcessStatus("Cargá un archivo para comenzar.");
@@ -1447,6 +1964,10 @@ function resetApplication() {
   metricElements.riskLow.textContent = "0";
   metricElements.riskMedium.textContent = "0";
   metricElements.riskHigh.textContent = "0";
+  metricElements.active.textContent = "0";
+  metricElements.suspended.textContent = "0";
+  metricElements.activeCard.hidden = true;
+  metricElements.suspendedCard.hidden = true;
   metricElements.studentsNote.textContent = "Esperando datos";
   metricElements.activitiesNote.textContent = "Esperando datos";
   metricElements.plannedNote.textContent = "Esperando datos";
@@ -1456,9 +1977,25 @@ function resetApplication() {
   elements.activityChart.textContent = "Los indicadores aparecerán después del análisis.";
   elements.alertsList.className = "alerts-list empty-state";
   elements.alertsList.textContent = "Todavía no hay señales para mostrar.";
-  elements.studentTableBody.innerHTML = '<tr><td colspan="8" class="table-empty">Cargá información para construir el seguimiento.</td></tr>';
+  resetMailSection();
+  elements.studentTableBody.innerHTML = '<tr><td colspan="9" class="table-empty">Cargá información para construir el seguimiento.</td></tr>';
   elements.tableCount.textContent = "0 registros";
   updateFormReadiness();
+}
+
+function resetMailSection() {
+  elements.mailHighCount.textContent = "0 destinatarios";
+  elements.mailMediumCount.textContent = "0 destinatarios";
+  elements.mailLowCount.textContent = "0 destinatarios";
+  elements.mailHighSubject.value = "";
+  elements.mailMediumSubject.value = "";
+  elements.mailLowSubject.value = "";
+  elements.mailHighRecipients.value = "";
+  elements.mailMediumRecipients.value = "";
+  elements.mailLowRecipients.value = "";
+  elements.mailHighBody.value = "";
+  elements.mailMediumBody.value = "";
+  elements.mailLowBody.value = "";
 }
 
 updateParticipantStatus();
