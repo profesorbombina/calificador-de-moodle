@@ -19,4 +19,22 @@ if (!/id="approvalGrade"[^>]*min="0"[^>]*max="100"/i.test(html)) {
   throw new Error("La nota de aprobación debe admitir enteros de 0 a 100");
 }
 
+for (const label of ["Riesgo Alto", "Riesgo Medio", "Riesgo Bajo / Sin riesgo"]) {
+  if (!html.includes(label)) throw new Error(`Falta el bloque de correo para ${label}`);
+}
+
+for (const id of ["mailHighSubject", "mailMediumSubject", "mailLowSubject", "mailHighRecipients", "mailMediumRecipients", "mailLowRecipients", "mailHighBody", "mailMediumBody", "mailLowBody"]) {
+  if (!html.includes(`id="${id}"`)) throw new Error(`Falta el campo de correo ${id}`);
+}
+
+const copyButtons = html.match(/data-copy-target="/g) || [];
+if (copyButtons.length < 9) throw new Error("Cada bloque de correo debe permitir copiar destinatarios, asunto y cuerpo");
+
+const gmailButtons = html.match(/data-gmail-group="/g) || [];
+if (gmailButtons.length !== 3) throw new Error("Cada bloque de correo debe incluir botÃ³n Gmail");
+
+for (const id of ["mailCourseName", "mailTeacherName", "mailTone", "signalFilter", "participantStateFilter", "metricActive", "metricSuspended"]) {
+  if (!html.includes(`id="${id}"`)) throw new Error(`Falta el control ${id}`);
+}
+
 console.log("UI structure test OK");

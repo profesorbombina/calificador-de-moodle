@@ -2,6 +2,22 @@
 
 ## Versión 2 en desarrollo
 
+### Correos de acompanamiento pedagogico
+
+- Incorporacion de una seccion de correos listos para copiar segun Riesgo Alto, Medio y Bajo.
+- Generacion automatica de destinatarios a partir de los correos detectados en el analisis.
+- Redaccion formal y pedagogica para intervencion prioritaria, seguimiento preventivo y reconocimiento de continuidad.
+- Personalizacion por curso, docente/equipo y tono formal o cercano.
+- Generacion de asunto sugerido y apertura de borradores en Gmail con destinatarios, asunto y cuerpo ya cargados.
+- Inclusion de los correos sugeridos en una hoja propia del informe Excel.
+
+### Seguimiento y exportacion
+
+- Filtros globales por riesgo, promedio, senales prioritarias y estado de usuario cuando Moodle informa Activo/Suspendido.
+- Recalculo del dashboard, alertas, actividades, tabla y correos segun el filtro activo.
+- Nuevas metricas de estudiantes activos y suspendidos visibles solo cuando el dato existe.
+- Informe Excel ampliado con dashboard reorganizado, hoja de alertas y reporte para coordinacion.
+
 ### Flujo guiado y criterio de riesgo
 
 - Incorporación de seis pasos visuales y obligatorios.

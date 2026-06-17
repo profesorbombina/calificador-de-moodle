@@ -38,10 +38,27 @@ const elements = {
   studentSearch: document.querySelector("#studentSearch"),
   riskFilter: document.querySelector("#riskFilter"),
   averageFilter: document.querySelector("#averageFilter"),
+  signalFilter: document.querySelector("#signalFilter"),
+  participantStateFilter: document.querySelector("#participantStateFilter"),
   studentTableBody: document.querySelector("#studentTableBody"),
   tableCount: document.querySelector("#tableCount"),
   activityChart: document.querySelector("#activityChart"),
-  alertsList: document.querySelector("#alertsList")
+  alertsList: document.querySelector("#alertsList"),
+  mailCourseName: document.querySelector("#mailCourseName"),
+  mailTeacherName: document.querySelector("#mailTeacherName"),
+  mailTone: document.querySelector("#mailTone"),
+  mailHighCount: document.querySelector("#mailHighCount"),
+  mailMediumCount: document.querySelector("#mailMediumCount"),
+  mailLowCount: document.querySelector("#mailLowCount"),
+  mailHighSubject: document.querySelector("#mailHighSubject"),
+  mailMediumSubject: document.querySelector("#mailMediumSubject"),
+  mailLowSubject: document.querySelector("#mailLowSubject"),
+  mailHighRecipients: document.querySelector("#mailHighRecipients"),
+  mailMediumRecipients: document.querySelector("#mailMediumRecipients"),
+  mailLowRecipients: document.querySelector("#mailLowRecipients"),
+  mailHighBody: document.querySelector("#mailHighBody"),
+  mailMediumBody: document.querySelector("#mailMediumBody"),
+  mailLowBody: document.querySelector("#mailLowBody")
 };
 
 const metricElements = {
@@ -57,7 +74,11 @@ const metricElements = {
   averageNote: document.querySelector("#metricAverageNote"),
   riskLow: document.querySelector("#metricRiskLow"),
   riskMedium: document.querySelector("#metricRiskMedium"),
-  riskHigh: document.querySelector("#metricRiskHigh")
+  riskHigh: document.querySelector("#metricRiskHigh"),
+  active: document.querySelector("#metricActive"),
+  suspended: document.querySelector("#metricSuspended"),
+  activeCard: document.querySelector("#activeMetricCard"),
+  suspendedCard: document.querySelector("#suspendedMetricCard")
 };
 
 const ACCEPTED_EXTENSIONS = /\.(xlsx|xls|ods|csv)$/i;
@@ -72,6 +93,11 @@ elements.clearParticipantsBtn.addEventListener("click", clearParticipants);
 elements.studentSearch.addEventListener("input", applyStudentFilters);
 elements.riskFilter.addEventListener("change", applyStudentFilters);
 elements.averageFilter.addEventListener("change", applyStudentFilters);
+elements.signalFilter.addEventListener("change", applyStudentFilters);
+elements.participantStateFilter.addEventListener("change", applyStudentFilters);
+elements.mailCourseName.addEventListener("input", refreshMailFromFilters);
+elements.mailTeacherName.addEventListener("input", refreshMailFromFilters);
+elements.mailTone.addEventListener("change", refreshMailFromFilters);
 elements.plannedActivities.addEventListener("input", validatePlannedActivities);
 elements.highRiskDeliveries.addEventListener("input", validateRiskThresholds);
 elements.lowRiskDeliveries.addEventListener("input", validateRiskThresholds);
@@ -79,6 +105,12 @@ elements.approvalGrade.addEventListener("input", validateApprovalGrade);
 elements.fileTab.addEventListener("click", () => selectSourceTab("file"));
 elements.urlTab.addEventListener("click", () => selectSourceTab("url"));
 elements.participantText.addEventListener("input", updateParticipantStatus);
+document.querySelectorAll("[data-copy-target]").forEach(button => {
+  button.addEventListener("click", () => copyFieldValue(button.dataset.copyTarget, button));
+});
+document.querySelectorAll("[data-gmail-group]").forEach(button => {
+  button.addEventListener("click", () => openGmailDraft(button.dataset.gmailGroup));
+});
 
 ["dragenter", "dragover"].forEach(eventName => {
   elements.dropzone.addEventListener(eventName, event => {
@@ -261,6 +293,9 @@ async function analyzeCourse() {
     elements.studentSearch.disabled = false;
     elements.riskFilter.disabled = false;
     elements.averageFilter.disabled = false;
+    elements.signalFilter.disabled = false;
+    elements.participantStateFilter.disabled = !state.analysis.hasParticipantStates;
+    elements.participantStateFilter.hidden = !state.analysis.hasParticipantStates;
     setProcessStatus(`Análisis listo: ${state.analysis.students.length} estudiantes y ${state.analysis.activities.length} actividades.`, "ok");
     elements.dashboard.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (error) {
@@ -337,6 +372,7 @@ function buildAnalysis(rows, participants, sheetName, plannedActivities = 0, hig
     const average = averageOf(numericGrades);
     const participant = participantMap.get(email.toLowerCase()) || {};
     const noAccess = normalizeText(participant.access) === "nunca";
+    const participantState = normalizeParticipantState(participant.status);
     const expectedActivities = plannedActivities;
     const deliveryRate = expectedActivities > 0 ? Math.min(delivered / expectedActivities, 1) : 0;
     const risk = classifyRisk({ delivered, average, noAccess, highRiskDeliveries, lowRiskDeliveries, approvalGrade });
@@ -347,6 +383,8 @@ function buildAnalysis(rows, participants, sheetName, plannedActivities = 0, hig
       id: indexes.id >= 0 ? row[indexes.id] : "",
       group: participant.groups || "Sin grupo",
       access: participant.access || "Sin dato",
+      participantStatus: participant.status || "Sin dato",
+      participantState,
       grades: submissions.map(submission => submission.display),
       delivered,
       detectedDeliveries,
@@ -369,6 +407,9 @@ function buildAnalysis(rows, participants, sheetName, plannedActivities = 0, hig
   const riskHigh = students.filter(student => student.status === "high").length;
   const noAccessCount = students.filter(student => normalizeText(student.access) === "nunca").length;
   const matchedParticipants = students.filter(student => participantMap.has(student.email.toLowerCase())).length;
+  const activeCount = students.filter(student => student.participantState === "active").length;
+  const suspendedCount = students.filter(student => student.participantState === "suspended").length;
+  const hasParticipantStates = students.some(student => student.participantState !== "unknown");
   // El promedio del curso pondera cada calificación numérica registrada por igual.
   const courseAverage = averageOf(activities.flatMap(activity => activity.grades));
 
@@ -382,6 +423,7 @@ function buildAnalysis(rows, participants, sheetName, plannedActivities = 0, hig
     approvalGrade,
     activities,
     students,
+    hasParticipantStates,
     totals: {
       delivered: totalDelivered,
       possible: totalPossible,
@@ -391,12 +433,19 @@ function buildAnalysis(rows, participants, sheetName, plannedActivities = 0, hig
       riskMedium,
       riskHigh,
       noAccess: noAccessCount,
-      matchedParticipants
+      matchedParticipants,
+      active: activeCount,
+      suspended: suspendedCount
     }
   };
 }
 
 function renderDashboard(analysis) {
+  toggleParticipantStateControls(analysis);
+  applyStudentFilters();
+}
+
+function renderDashboardPanels(analysis) {
   const { students, activities, totals } = analysis;
   metricElements.students.textContent = students.length;
   metricElements.studentsNote.textContent = `${totals.matchedParticipants} cruzados con Participantes`;
@@ -411,10 +460,12 @@ function renderDashboard(analysis) {
   metricElements.riskLow.textContent = totals.riskLow;
   metricElements.riskMedium.textContent = totals.riskMedium;
   metricElements.riskHigh.textContent = totals.riskHigh;
+  metricElements.active.textContent = totals.active;
+  metricElements.suspended.textContent = totals.suspended;
 
   renderActivityChart(activities, students.length);
   renderAlerts(analysis);
-  applyStudentFilters();
+  renderMailSection(analysis);
 }
 
 function renderActivityChart(activities, studentCount) {
@@ -431,6 +482,16 @@ function renderActivityChart(activities, studentCount) {
 }
 
 function renderAlerts(analysis) {
+  const alerts = collectAlerts(analysis);
+  elements.alertsList.classList.remove("empty-state");
+  elements.alertsList.innerHTML = alerts.map(([type, symbol, title, text]) => `
+    <div class="alert-item alert-${type}">
+      <span class="alert-symbol">${symbol}</span>
+      <div><strong>${escapeHtml(title)}</strong><span>${escapeHtml(text)}</span></div>
+    </div>`).join("");
+}
+
+function collectAlerts(analysis) {
   const { students, activities, totals } = analysis;
   const weakActivities = activities.filter(activity => activity.delivered / Math.max(students.length, 1) < 0.5);
   const alerts = [];
@@ -440,13 +501,112 @@ function renderAlerts(analysis) {
   if (totals.riskHigh) alerts.push(["danger", "!", `${totals.riskHigh} estudiantes en Riesgo Alto`, "No ingresaron, no entregaron actividades o su promedio está desaprobado."]);
   if (totals.deliveryRate >= 0.75) alerts.push(["success", "✓", "Buen nivel de participación", `El curso alcanza ${formatPercent(totals.deliveryRate)} de entregas.`]);
   if (!alerts.length) alerts.push(["success", "✓", "Sin alertas críticas", "El análisis no encontró señales prioritarias."]);
+  return alerts;
+}
 
-  elements.alertsList.classList.remove("empty-state");
-  elements.alertsList.innerHTML = alerts.map(([type, symbol, title, text]) => `
-    <div class="alert-item alert-${type}">
-      <span class="alert-symbol">${symbol}</span>
-      <div><strong>${escapeHtml(title)}</strong><span>${escapeHtml(text)}</span></div>
-    </div>`).join("");
+function renderMailSection(analysis) {
+  const groups = {
+    high: analysis.students.filter(student => student.status === "high" && student.email),
+    medium: analysis.students.filter(student => student.status === "medium" && student.email),
+    low: analysis.students.filter(student => student.status === "low" && student.email)
+  };
+
+  setMailGroup("High", groups.high, buildMailSubject("high"), buildMailBody("high", analysis));
+  setMailGroup("Medium", groups.medium, buildMailSubject("medium"), buildMailBody("medium", analysis));
+  setMailGroup("Low", groups.low, buildMailSubject("low"), buildMailBody("low", analysis));
+}
+
+function setMailGroup(key, students, subject, body) {
+  const uniqueEmails = [...new Set(students.map(student => student.email.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+  elements[`mail${key}Count`].innerHTML = `<span class="count-number">${uniqueEmails.length}</span> destinatario${uniqueEmails.length === 1 ? "" : "s"}`;
+  elements[`mail${key}Subject`].value = subject;
+  elements[`mail${key}Recipients`].value = uniqueEmails.join(", ");
+  elements[`mail${key}Body`].value = body;
+}
+
+function buildMailSubject(status) {
+  const courseName = getMailCourseName();
+  const suffix = courseName ? ` - ${courseName}` : "";
+  const subjects = {
+    high: `Seguimiento prioritario en Moodle${suffix}`,
+    medium: `Seguimiento preventivo de cursada${suffix}`,
+    low: `Continuidad y reconocimiento de participación${suffix}`
+  };
+  return subjects[status];
+}
+
+function buildMailBody(status, analysis) {
+  const courseName = getMailCourseName();
+  const teacherName = getMailTeacherName();
+  const courseReference = courseName ? ` del curso ${courseName}` : " del aula virtual";
+  const courseContext = `Al revisar el seguimiento${courseReference}, se consideraron ${analysis.plannedActivities} actividades planificadas hasta la fecha y una nota de aprobación de ${analysis.approvalGrade}.`;
+  const signatures = `Saludos cordiales.\n\n${teacherName}`;
+  const formal = elements.mailTone.value === "formal";
+  const greeting = formal ? "Estimados/as estudiantes:" : "Hola a todos/as:";
+  const closeInvite = formal ? "por favor comuníquense" : "escríbannos";
+  const bodies = {
+    high: `${greeting}\n\nEspero que se encuentren bien. ${courseContext}\n\nEl registro muestra que necesitan una intervención prioritaria para sostener la continuidad en la cursada. Les pedimos que ingresen a Moodle a la brevedad, revisen las actividades pendientes y regularicen las entregas posibles.\n\nSi tuvieron dificultades de acceso, organización, comprensión de consignas o cualquier otra situación que esté afectando su participación, ${closeInvite} con el equipo docente para poder acompañarlos/as y acordar una estrategia de recuperación.\n\nEs importante retomar la actividad en el aula virtual cuanto antes para evitar que se acumulen nuevas tareas y para fortalecer el proceso de aprendizaje.\n\n${signatures}`,
+    medium: `${greeting}\n\nEspero que se encuentren bien. ${courseContext}\n\nEl seguimiento indica participación parcial o algunos indicadores que conviene atender para sostener una trayectoria regular. Les recomendamos ingresar a Moodle, revisar las actividades realizadas y completar aquellas que todavía estén pendientes.\n\nTambién los/as invitamos a consultar con el equipo docente si necesitan orientación sobre consignas, plazos, materiales o formas de entrega. La intención de este mensaje es acompañar preventivamente y evitar que pequeñas demoras se transformen en dificultades mayores.\n\nContinuar con una participación frecuente les permitirá fortalecer los aprendizajes y llegar en mejores condiciones a las próximas instancias del curso.\n\n${signatures}`,
+    low: `${greeting}\n\nEspero que se encuentren bien. ${courseContext}\n\nEl seguimiento muestra una participación adecuada en la plataforma y un avance favorable en las actividades propuestas. Queremos reconocer el compromiso sostenido y alentarlos/as a continuar con este ritmo de trabajo.\n\nLes sugerimos seguir ingresando periódicamente a Moodle, revisar las novedades del aula y mantener al día las próximas entregas. Ante cualquier duda o dificultad, pueden comunicarse con el equipo docente para recibir orientación.\n\nLa continuidad en la participación es clave para consolidar los aprendizajes y transitar el curso de manera organizada.\n\n${signatures}`
+  };
+  return bodies[status];
+}
+
+function getMailCourseName() {
+  return elements.mailCourseName.value.trim();
+}
+
+function getMailTeacherName() {
+  return elements.mailTeacherName.value.trim() || "Equipo docente";
+}
+
+function refreshMailFromFilters() {
+  if (!state.analysis) return;
+  renderMailSection(buildFilteredAnalysis(state.analysis, state.filteredStudents));
+}
+
+async function copyFieldValue(targetId, button) {
+  const field = document.querySelector(`#${targetId}`);
+  if (!field || !field.value.trim()) {
+    setProcessStatus("No hay contenido para copiar en ese bloque.", "error");
+    return;
+  }
+
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(field.value);
+    } else {
+      field.focus();
+      field.select();
+      document.execCommand("copy");
+      field.setSelectionRange(0, 0);
+    }
+    const originalText = button.textContent;
+    button.textContent = "Copiado";
+    setProcessStatus("Contenido copiado al portapapeles.", "ok");
+    setTimeout(() => { button.textContent = originalText; }, 1400);
+  } catch (error) {
+    setProcessStatus("No se pudo copiar automaticamente. Selecciona el texto y copialo manualmente.", "error");
+  }
+}
+
+function openGmailDraft(key) {
+  const recipients = elements[`mail${key}Recipients`].value.trim();
+  const subject = elements[`mail${key}Subject`].value.trim();
+  const body = elements[`mail${key}Body`].value.trim();
+  if (!recipients || !body) {
+    setProcessStatus("No hay destinatarios suficientes para abrir Gmail en ese grupo.", "error");
+    return;
+  }
+
+  const url = new URL("https://mail.google.com/mail/");
+  url.searchParams.set("view", "cm");
+  url.searchParams.set("fs", "1");
+  url.searchParams.set("to", recipients);
+  url.searchParams.set("su", subject);
+  url.searchParams.set("body", body);
+  window.open(url.toString(), "_blank", "noopener");
+  setProcessStatus("Gmail se abrió con destinatarios, asunto y cuerpo cargados.", "ok");
 }
 
 function applyStudentFilters() {
@@ -454,19 +614,25 @@ function applyStudentFilters() {
   const query = normalizeText(elements.studentSearch.value);
   const status = elements.riskFilter.value;
   const averageFilter = elements.averageFilter.value;
+  const signalFilter = elements.signalFilter.value;
+  const participantState = state.analysis.hasParticipantStates ? elements.participantStateFilter.value : "all";
   state.filteredStudents = state.analysis.students.filter(student => {
-    const matchesText = !query || normalizeText(`${student.name} ${student.email} ${student.group}`).includes(query);
+    const matchesText = !query || normalizeText(`${student.name} ${student.email} ${student.group} ${student.participantStatus}`).includes(query);
     const matchesStatus = status === "all" || student.status === status;
     const matchesAverage = averageMatches(student.average, averageFilter, state.analysis.approvalGrade);
-    return matchesText && matchesStatus && matchesAverage;
+    const matchesSignal = signalMatches(student, signalFilter, state.analysis.approvalGrade);
+    const matchesParticipantState = participantState === "all" || student.participantState === participantState;
+    return matchesText && matchesStatus && matchesAverage && matchesSignal && matchesParticipantState;
   });
+  const filteredAnalysis = buildFilteredAnalysis(state.analysis, state.filteredStudents);
+  renderDashboardPanels(filteredAnalysis);
   renderStudentTable(state.filteredStudents, state.analysis.plannedActivities);
 }
 
 function renderStudentTable(students, plannedActivities) {
   elements.tableCount.textContent = `${students.length} registros`;
   if (!students.length) {
-    elements.studentTableBody.innerHTML = '<tr><td colspan="8" class="table-empty">No hay estudiantes que coincidan con el filtro.</td></tr>';
+    elements.studentTableBody.innerHTML = '<tr><td colspan="9" class="table-empty">No hay estudiantes que coincidan con el filtro.</td></tr>';
     return;
   }
   elements.studentTableBody.innerHTML = students.map(student => `
@@ -477,6 +643,7 @@ function renderStudentTable(students, plannedActivities) {
       <td>${student.delivered} / ${plannedActivities}</td>
       <td>${student.average === null ? "Sin nota" : student.average.toFixed(2)}</td>
       <td class="muted-cell">${escapeHtml(student.access)}</td>
+      <td class="muted-cell">${escapeHtml(student.participantStatus)}</td>
       <td>${statusBadge(student.status, student.riskReason)}</td>
       <td class="reason-cell">${escapeHtml(student.riskReason)}</td>
     </tr>`).join("");
@@ -506,15 +673,16 @@ function buildReportWorkbook(analysis) {
     ["INFORME DEL CURSO", "", "", ""],
     ["Generado", analysis.generatedAt.toLocaleString("es-AR"), "Fuente", analysis.sourceName],
     [],
-    ["INDICADOR", "VALOR", "DETALLE", ""],
-    ["Estudiantes", analysis.students.length, "Cruce con Participantes", analysis.totals.matchedParticipants],
-    ["Actividades", analysis.activities.length, "Entregas registradas", analysis.totals.delivered],
-    ["Actividades a la fecha", analysis.plannedActivities, "Entregas esperadas", analysis.totals.possible],
-    ["Riesgo Alto hasta", analysis.highRiskDeliveries, "Riesgo Bajo desde", analysis.lowRiskDeliveries],
-    ["Nota de aprobación", analysis.approvalGrade, "Promedio del Curso", analysis.totals.average ?? ""],
-    ["Nivel de entrega", analysis.totals.deliveryRate, "", ""],
-    ["Riesgo Bajo", analysis.totals.riskLow, "Riesgo Medio", analysis.totals.riskMedium],
-    ["Riesgo Alto", analysis.totals.riskHigh, "Nunca ingresaron", analysis.totals.noAccess],
+    ["ESTUDIANTES", "VALOR", "ACTIVIDADES", "VALOR"],
+    ["Total de estudiantes analizados", analysis.students.length, "Total de actividades detectadas", analysis.activities.length],
+    ["Estudiantes cruzados con Participantes", analysis.totals.matchedParticipants, "Actividades a realizar a la fecha", analysis.plannedActivities],
+    ["Estudiantes con Riesgo Bajo", analysis.totals.riskLow, "Entregas registradas", analysis.totals.delivered],
+    ["Estudiantes con Riesgo Medio", analysis.totals.riskMedium, "Entregas esperadas", analysis.totals.possible],
+    ["Estudiantes con Riesgo Alto", analysis.totals.riskHigh, "Nivel de entrega del curso", analysis.totals.deliveryRate],
+    ["Estudiantes que nunca ingresaron", analysis.totals.noAccess, "Promedio del Curso", analysis.totals.average ?? ""],
+    ["Estudiantes activos", analysis.totals.active, "Riesgo Alto hasta entregas", analysis.highRiskDeliveries],
+    ["Estudiantes suspendidos", analysis.totals.suspended, "Riesgo Bajo desde entregas", analysis.lowRiskDeliveries],
+    ["Nota de aprobación configurada", analysis.approvalGrade, "", ""],
     [],
     ["ACTIVIDAD", "ENTREGAS", "PARTICIPACIÓN", "PROMEDIO"],
     ...analysis.activities.map(activity => [
@@ -528,7 +696,7 @@ function buildReportWorkbook(analysis) {
   styleDashboardSheet(dashboardSheet, dashboardData.length);
   XLSX.utils.book_append_sheet(workbook, dashboardSheet, "Dashboard");
 
-  const gradeHeaders = ["Nombre", "Correo", "ID", "Grupo", ...analysis.activities.map(activity => activity.name), "Entregas", "Promedio", "Último acceso", "Estado", "Motivo"];
+  const gradeHeaders = ["Nombre", "Correo", "ID", "Grupo", ...analysis.activities.map(activity => activity.name), "Entregas", "Promedio", "Último acceso", "Estado usuario", "Riesgo", "Motivo"];
   const gradeRows = analysis.students.map(student => [
     student.name,
     student.email,
@@ -538,6 +706,7 @@ function buildReportWorkbook(analysis) {
     `${student.delivered} / ${analysis.plannedActivities}`,
     student.average ?? "",
     student.access,
+    student.participantStatus,
     statusLabel(student.status),
     student.riskReason
   ]);
@@ -545,12 +714,64 @@ function buildReportWorkbook(analysis) {
   styleDataSheet(gradeSheet, gradeHeaders.length, gradeRows.length + 1);
   XLSX.utils.book_append_sheet(workbook, gradeSheet, "Calificaciones");
 
-  const trackingHeaders = ["Nombre y Apellido", "Correo", "Grupo", "Último acceso", "Estado", "Motivo"];
-  const trackingRows = analysis.students.map(student => [student.name, student.email, student.group, student.access, statusLabel(student.status), student.riskReason]);
+  const trackingHeaders = ["Nombre y Apellido", "Correo", "Grupo", "Último acceso", "Estado usuario", "Riesgo", "Motivo"];
+  const trackingRows = analysis.students.map(student => [student.name, student.email, student.group, student.access, student.participantStatus, statusLabel(student.status), student.riskReason]);
   const trackingSheet = XLSX.utils.aoa_to_sheet([trackingHeaders, ...trackingRows]);
   styleDataSheet(trackingSheet, trackingHeaders.length, trackingRows.length + 1);
   XLSX.utils.book_append_sheet(workbook, trackingSheet, "Seguimiento");
+
+  const alertRows = [["Tipo", "Señal", "Detalle"], ...collectAlerts(analysis).map(([type, , title, text]) => [alertTypeLabel(type), title, text])];
+  const alertSheet = XLSX.utils.aoa_to_sheet(alertRows);
+  styleDataSheet(alertSheet, 3, alertRows.length);
+  alertSheet["!cols"] = [{ wch: 18 }, { wch: 36 }, { wch: 80 }];
+  XLSX.utils.book_append_sheet(workbook, alertSheet, "Alertas");
+
+  const coordinationRows = buildCoordinationReportRows(analysis);
+  const coordinationSheet = XLSX.utils.aoa_to_sheet(coordinationRows);
+  styleDataSheet(coordinationSheet, 2, coordinationRows.length);
+  coordinationSheet["!cols"] = [{ wch: 34 }, { wch: 95 }];
+  XLSX.utils.book_append_sheet(workbook, coordinationSheet, "Reporte coordinación");
+
+  const mailRows = buildMailExportRows(analysis);
+  const mailSheet = XLSX.utils.aoa_to_sheet(mailRows);
+  styleDataSheet(mailSheet, 5, mailRows.length);
+  mailSheet["!cols"] = [{ wch: 30 }, { wch: 14 }, { wch: 48 }, { wch: 42 }, { wch: 90 }];
+  XLSX.utils.book_append_sheet(workbook, mailSheet, "Correos");
+
   return workbook;
+}
+
+function buildCoordinationReportRows(analysis) {
+  return [
+    ["Reporte para coordinación", "Síntesis del seguimiento del curso"],
+    ["Fecha de generación", analysis.generatedAt.toLocaleString("es-AR")],
+    ["Fuente", analysis.sourceName],
+    ["Resumen de estudiantes", `${analysis.students.length} estudiantes analizados. ${analysis.totals.riskHigh} con Riesgo Alto, ${analysis.totals.riskMedium} con Riesgo Medio y ${analysis.totals.riskLow} con Riesgo Bajo.`],
+    ["Resumen de actividades", `${analysis.activities.length} actividades detectadas. Se esperaban ${analysis.totals.possible} entregas y se registraron ${analysis.totals.delivered}, equivalente al ${formatPercent(analysis.totals.deliveryRate)}.`],
+    ["Promedio del Curso", analysis.totals.average === null ? "Sin calificaciones numéricas suficientes" : analysis.totals.average.toFixed(2)],
+    ["Señales prioritarias", collectAlerts(analysis).map(([, , title, text]) => `${title}: ${text}`).join("\n")],
+    ["Sugerencia de acción", "Priorizar contacto con estudiantes sin ingreso, sin entregas o con promedio inferior a la nota de aprobación. Usar la hoja Correos para copiar destinatarios, asunto y cuerpo sugerido."]
+  ];
+}
+
+function alertTypeLabel(type) {
+  if (type === "danger") return "Prioritaria";
+  if (type === "warning") return "Atención";
+  return "Informativa";
+}
+
+function buildMailExportRows(analysis) {
+  const groups = [
+    ["Estudiantes con Riesgo Alto", analysis.students.filter(student => student.status === "high" && student.email), buildMailSubject("high"), buildMailBody("high", analysis)],
+    ["Estudiantes con Riesgo Medio", analysis.students.filter(student => student.status === "medium" && student.email), buildMailSubject("medium"), buildMailBody("medium", analysis)],
+    ["Estudiantes con Riesgo Bajo", analysis.students.filter(student => student.status === "low" && student.email), buildMailSubject("low"), buildMailBody("low", analysis)]
+  ];
+  const rows = [["Grupo", "Destinatarios", "Correos", "Asunto sugerido", "Cuerpo sugerido"]];
+  for (const [label, students, subject, body] of groups) {
+    const emails = [...new Set(students.map(student => student.email.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+    rows.push([label, emails.length, emails.join("; "), subject, body]);
+  }
+  return rows;
 }
 
 function styleDashboardSheet(sheet, rowCount) {
@@ -562,14 +783,18 @@ function styleDashboardSheet(sheet, rowCount) {
       sheet[ref].s = { font: { name: "Aptos", sz: 10, color: { rgb: "FF163238" } }, alignment: { vertical: "center", wrapText: true }, border };
     }
   }
-  ["A1", "A4", "A14"].forEach(ref => {
+  ["A1", "A4", "B4", "C4", "D4", "A15", "B15", "C15", "D15"].forEach(ref => {
     sheet[ref].s.fill = { fgColor: { rgb: "FF087C68" } };
     sheet[ref].s.font = { name: "Aptos Display", bold: true, sz: ref === "A1" ? 18 : 11, color: { rgb: "FFFFFFFF" } };
   });
-  sheet["!merges"] = [XLSX.utils.decode_range("A1:D1"), XLSX.utils.decode_range("A4:D4")];
+  sheet["!merges"] = [XLSX.utils.decode_range("A1:D1")];
   sheet["!cols"] = [{ wch:28 }, { wch:18 }, { wch:28 }, { wch:18 }];
-  sheet["B10"].z = "0.00%";
-  for (let row = 15; row <= rowCount; row++) sheet[`C${row}`].z = "0.00%";
+  if (sheet["D9"]) sheet["D9"].z = "0.00%";
+  if (sheet["D10"]) sheet["D10"].z = "0.00";
+  for (let row = 16; row <= rowCount; row++) {
+    if (sheet[`C${row}`]) sheet[`C${row}`].z = "0.00%";
+    if (sheet[`D${row}`]) sheet[`D${row}`].z = "0.00";
+  }
 }
 
 function styleDataSheet(sheet, colCount, rowCount) {
@@ -684,6 +909,65 @@ function classifyRisk({ delivered, average, noAccess, highRiskDeliveries, lowRis
   return { status: "medium", reason: `Realizó ${delivered} entregas; está entre los umbrales de Riesgo Alto y Bajo` };
 }
 
+function buildFilteredAnalysis(analysis, students) {
+  const activities = analysis.activities.map((activity, activityIndex) => {
+    const grades = [];
+    let textualDeliveries = 0;
+    let delivered = 0;
+    for (const student of students) {
+      const parsed = parseSubmission(student.grades[activityIndex]);
+      if (!parsed.delivered) continue;
+      delivered += 1;
+      if (parsed.numeric !== null) grades.push(parsed.numeric);
+      else textualDeliveries += 1;
+    }
+    return { ...activity, delivered, grades, textualDeliveries };
+  });
+  const totalPossible = students.length * analysis.plannedActivities;
+  const totalDelivered = students.reduce((sum, student) => sum + student.delivered, 0);
+  const riskLow = students.filter(student => student.status === "low").length;
+  const riskMedium = students.filter(student => student.status === "medium").length;
+  const riskHigh = students.filter(student => student.status === "high").length;
+  const noAccessCount = students.filter(student => normalizeText(student.access) === "nunca").length;
+  const matchedParticipants = students.filter(student => normalizeText(student.access) !== "sin dato" || normalizeText(student.participantStatus) !== "sin dato").length;
+  return {
+    ...analysis,
+    activities,
+    students,
+    totals: {
+      ...analysis.totals,
+      delivered: totalDelivered,
+      possible: totalPossible,
+      deliveryRate: totalPossible ? Math.min(totalDelivered / totalPossible, 1) : 0,
+      average: averageOf(activities.flatMap(activity => activity.grades)),
+      riskLow,
+      riskMedium,
+      riskHigh,
+      noAccess: noAccessCount,
+      matchedParticipants,
+      active: students.filter(student => student.participantState === "active").length,
+      suspended: students.filter(student => student.participantState === "suspended").length
+    }
+  };
+}
+
+function signalMatches(student, filter, approvalGrade) {
+  if (filter === "all") return true;
+  if (filter === "noAccess") return normalizeText(student.access) === "nunca";
+  if (filter === "noDeliveries") return student.delivered === 0;
+  if (filter === "belowAverage") return student.average !== null && student.average < approvalGrade;
+  if (filter === "noEmail") return !student.email;
+  return true;
+}
+
+function toggleParticipantStateControls(analysis) {
+  metricElements.activeCard.hidden = !analysis.hasParticipantStates;
+  metricElements.suspendedCard.hidden = !analysis.hasParticipantStates;
+  elements.participantStateFilter.hidden = !analysis.hasParticipantStates;
+  elements.participantStateFilter.disabled = !analysis.hasParticipantStates;
+  if (!analysis.hasParticipantStates) elements.participantStateFilter.value = "all";
+}
+
 function averageMatches(average, filter, approvalGrade) {
   if (filter === "all") return true;
   if (filter === "none") return average === null;
@@ -699,6 +983,17 @@ function averageOf(values) {
 
 function statusLabel(status) {
   return status === "low" ? "Riesgo Bajo" : status === "medium" ? "Riesgo Medio" : "Riesgo Alto";
+}
+
+function statusExportLabel(status) {
+  return status === "low" ? "Estudiantes con Riesgo Bajo" : status === "medium" ? "Estudiantes con Riesgo Medio" : "Estudiantes con Riesgo Alto";
+}
+
+function normalizeParticipantState(value) {
+  const text = normalizeText(value);
+  if (["activo", "activa", "active"].includes(text)) return "active";
+  if (["suspendido", "suspendida", "suspended", "inactivo", "inactiva", "inactive"].includes(text)) return "suspended";
+  return "unknown";
 }
 
 function normalizeText(value) {
@@ -780,11 +1075,19 @@ function resetApplication() {
   elements.studentSearch.value = "";
   elements.riskFilter.value = "all";
   elements.averageFilter.value = "all";
+  elements.signalFilter.value = "all";
+  elements.participantStateFilter.value = "all";
+  elements.mailCourseName.value = "";
+  elements.mailTeacherName.value = "";
+  elements.mailTone.value = "formal";
   elements.analyzeBtn.disabled = true;
   elements.downloadBtn.disabled = true;
   elements.studentSearch.disabled = true;
   elements.riskFilter.disabled = true;
   elements.averageFilter.disabled = true;
+  elements.signalFilter.disabled = true;
+  elements.participantStateFilter.disabled = true;
+  elements.participantStateFilter.hidden = true;
   setStatus("source", "Pendiente", "neutral");
   updateParticipantStatus();
   setProcessStatus("Cargá un archivo para comenzar.");
@@ -796,6 +1099,10 @@ function resetApplication() {
   metricElements.riskLow.textContent = "0";
   metricElements.riskMedium.textContent = "0";
   metricElements.riskHigh.textContent = "0";
+  metricElements.active.textContent = "0";
+  metricElements.suspended.textContent = "0";
+  metricElements.activeCard.hidden = true;
+  metricElements.suspendedCard.hidden = true;
   metricElements.studentsNote.textContent = "Esperando datos";
   metricElements.activitiesNote.textContent = "Esperando datos";
   metricElements.plannedNote.textContent = "Esperando datos";
@@ -805,9 +1112,25 @@ function resetApplication() {
   elements.activityChart.textContent = "Los indicadores aparecerán después del análisis.";
   elements.alertsList.className = "alerts-list empty-state";
   elements.alertsList.textContent = "Todavía no hay señales para mostrar.";
-  elements.studentTableBody.innerHTML = '<tr><td colspan="8" class="table-empty">Cargá información para construir el seguimiento.</td></tr>';
+  resetMailSection();
+  elements.studentTableBody.innerHTML = '<tr><td colspan="9" class="table-empty">Cargá información para construir el seguimiento.</td></tr>';
   elements.tableCount.textContent = "0 registros";
   updateFormReadiness();
+}
+
+function resetMailSection() {
+  elements.mailHighCount.textContent = "0 destinatarios";
+  elements.mailMediumCount.textContent = "0 destinatarios";
+  elements.mailLowCount.textContent = "0 destinatarios";
+  elements.mailHighSubject.value = "";
+  elements.mailMediumSubject.value = "";
+  elements.mailLowSubject.value = "";
+  elements.mailHighRecipients.value = "";
+  elements.mailMediumRecipients.value = "";
+  elements.mailLowRecipients.value = "";
+  elements.mailHighBody.value = "";
+  elements.mailMediumBody.value = "";
+  elements.mailLowBody.value = "";
 }
 
 updateParticipantStatus();

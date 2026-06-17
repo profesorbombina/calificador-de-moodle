@@ -21,7 +21,10 @@ function createElementStub() {
 
 const context = {
   console,
-  document: { querySelector: () => createElementStub() },
+  document: {
+    querySelector: () => createElementStub(),
+    querySelectorAll: () => []
+  },
   setTimeout,
   clearTimeout,
   Date,
@@ -77,8 +80,22 @@ if (analysis.totals.delivered !== 6) throw new Error("No se contaron las entrega
 if (analysis.activities[2].textualDeliveries !== 2) throw new Error("No se detectó la escala textual");
 if (analysis.totals.noAccess !== 1) throw new Error("No se detectó el estudiante sin acceso");
 if (analysis.totals.average !== 80) throw new Error("Promedio del curso incorrecto");
+if (!analysis.hasParticipantStates || analysis.totals.active !== 1 || analysis.totals.suspended !== 1) {
+  throw new Error("No se calcularon correctamente los estados activo/suspendido");
+}
 if (analysis.totals.riskHigh !== 1 || analysis.totals.riskMedium !== 1 || analysis.totals.riskLow !== 1) {
   throw new Error("Clasificación de riesgos incorrecta");
+}
+
+const filteredAnalysis = context.buildFilteredAnalysis(analysis, analysis.students.filter(student => student.participantState === "active"));
+if (filteredAnalysis.students.length !== 1 || filteredAnalysis.totals.active !== 1 || filteredAnalysis.totals.suspended !== 0) {
+  throw new Error("El panel filtrado no recalcula estados de usuario");
+}
+if (!context.signalMatches(analysis.students.find(student => student.email === "luis@example.com"), "noAccess", 60)) {
+  throw new Error("El filtro sin ingreso no detecta estudiantes sin acceso");
+}
+if (!context.buildMailSubject("high").includes("Seguimiento prioritario")) {
+  throw new Error("No se genera asunto sugerido para correos");
 }
 
 const failedGrade = context.classifyRisk({ delivered: 3, average: 59, noAccess: false, highRiskDeliveries: 1, lowRiskDeliveries: 2, approvalGrade: 60 });

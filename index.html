@@ -202,6 +202,18 @@
             <option value="belowApproval">Debajo de aprobación</option>
             <option value="approved">Aprobados</option>
           </select>
+          <select id="signalFilter" aria-label="Filtrar por señal de seguimiento" disabled>
+            <option value="all">Todas las señales</option>
+            <option value="noAccess">Sin ingreso</option>
+            <option value="noDeliveries">Sin entregas</option>
+            <option value="belowAverage">Promedio bajo</option>
+            <option value="noEmail">Sin correo</option>
+          </select>
+          <select id="participantStateFilter" aria-label="Filtrar por estado de usuario" disabled hidden>
+            <option value="all">Todos los estados</option>
+            <option value="active">Activos</option>
+            <option value="suspended">Suspendidos</option>
+          </select>
         </div>
       </div>
 
@@ -246,6 +258,16 @@
           <div><strong id="metricRiskHigh">0</strong><span>Riesgo Alto</span></div>
           <small>Sin acceso, sin entregas o desaprobado</small>
         </article>
+        <article class="metric-card accent-cyan participant-state-metric" id="activeMetricCard" hidden>
+          <div class="metric-icon">A</div>
+          <div><strong id="metricActive">0</strong><span>Activo</span></div>
+          <small>Estado informado en Participantes</small>
+        </article>
+        <article class="metric-card accent-red participant-state-metric" id="suspendedMetricCard" hidden>
+          <div class="metric-icon">S</div>
+          <div><strong id="metricSuspended">0</strong><span>Suspendido</span></div>
+          <small>Estado informado en Participantes</small>
+        </article>
       </div>
 
       <div class="insight-grid">
@@ -264,6 +286,108 @@
         </article>
       </div>
 
+      <section class="mail-section" id="mailSection" aria-label="Correos de acompañamiento">
+        <div class="mail-heading">
+          <div>
+            <span class="section-kicker">ACOMPAÑAMIENTO PEDAGÓGICO</span>
+            <h3>Correos listos para copiar</h3>
+          </div>
+          <p>Los destinatarios se agrupan según el riesgo calculado. Personalizá el curso, el docente y el tono antes de copiar o abrir Gmail.</p>
+        </div>
+
+        <div class="mail-settings" aria-label="Personalización de correos">
+          <label>
+            <span>Curso</span>
+            <input id="mailCourseName" type="text" placeholder="Nombre del curso">
+          </label>
+          <label>
+            <span>Docente o equipo</span>
+            <input id="mailTeacherName" type="text" placeholder="Equipo docente">
+          </label>
+          <label>
+            <span>Tono</span>
+            <select id="mailTone">
+              <option value="formal">Formal</option>
+              <option value="close">Cercano</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="mail-grid">
+          <article class="panel mail-card mail-card-high">
+            <div class="mail-card-header">
+              <div>
+                <span class="mail-label">Riesgo Alto</span>
+                <h4>Intervención prioritaria</h4>
+              </div>
+              <strong id="mailHighCount">0 destinatarios</strong>
+            </div>
+            <label class="field-label" for="mailHighSubject">Asunto sugerido</label>
+            <input id="mailHighSubject" class="mail-subject" type="text" readonly>
+            <label class="field-label" for="mailHighRecipients">Correos de estudiantes a contactar</label>
+            <textarea id="mailHighRecipients" class="mail-recipients" readonly placeholder="Sin destinatarios por ahora."></textarea>
+            <div class="mail-actions">
+              <button class="button button-ghost copy-button" type="button" data-copy-target="mailHighRecipients">Copiar correos</button>
+              <button class="button button-ghost copy-button" type="button" data-copy-target="mailHighSubject">Copiar asunto</button>
+            </div>
+            <label class="field-label" for="mailHighBody">Cuerpo sugerido del correo</label>
+            <textarea id="mailHighBody" class="mail-body" readonly></textarea>
+            <div class="mail-actions">
+              <button class="button button-primary copy-button" type="button" data-copy-target="mailHighBody">Copiar cuerpo</button>
+              <button class="button button-gmail copy-button" type="button" data-gmail-group="High">Gmail</button>
+            </div>
+          </article>
+
+          <article class="panel mail-card mail-card-medium">
+            <div class="mail-card-header">
+              <div>
+                <span class="mail-label">Riesgo Medio</span>
+                <h4>Seguimiento preventivo</h4>
+              </div>
+              <strong id="mailMediumCount">0 destinatarios</strong>
+            </div>
+            <label class="field-label" for="mailMediumSubject">Asunto sugerido</label>
+            <input id="mailMediumSubject" class="mail-subject" type="text" readonly>
+            <label class="field-label" for="mailMediumRecipients">Correos de estudiantes a contactar</label>
+            <textarea id="mailMediumRecipients" class="mail-recipients" readonly placeholder="Sin destinatarios por ahora."></textarea>
+            <div class="mail-actions">
+              <button class="button button-ghost copy-button" type="button" data-copy-target="mailMediumRecipients">Copiar correos</button>
+              <button class="button button-ghost copy-button" type="button" data-copy-target="mailMediumSubject">Copiar asunto</button>
+            </div>
+            <label class="field-label" for="mailMediumBody">Cuerpo sugerido del correo</label>
+            <textarea id="mailMediumBody" class="mail-body" readonly></textarea>
+            <div class="mail-actions">
+              <button class="button button-primary copy-button" type="button" data-copy-target="mailMediumBody">Copiar cuerpo</button>
+              <button class="button button-gmail copy-button" type="button" data-gmail-group="Medium">Gmail</button>
+            </div>
+          </article>
+
+          <article class="panel mail-card mail-card-low">
+            <div class="mail-card-header">
+              <div>
+                <span class="mail-label">Riesgo Bajo / Sin riesgo</span>
+                <h4>Reconocimiento y continuidad</h4>
+              </div>
+              <strong id="mailLowCount">0 destinatarios</strong>
+            </div>
+            <label class="field-label" for="mailLowSubject">Asunto sugerido</label>
+            <input id="mailLowSubject" class="mail-subject" type="text" readonly>
+            <label class="field-label" for="mailLowRecipients">Correos de estudiantes a contactar</label>
+            <textarea id="mailLowRecipients" class="mail-recipients" readonly placeholder="Sin destinatarios por ahora."></textarea>
+            <div class="mail-actions">
+              <button class="button button-ghost copy-button" type="button" data-copy-target="mailLowRecipients">Copiar correos</button>
+              <button class="button button-ghost copy-button" type="button" data-copy-target="mailLowSubject">Copiar asunto</button>
+            </div>
+            <label class="field-label" for="mailLowBody">Cuerpo sugerido del correo</label>
+            <textarea id="mailLowBody" class="mail-body" readonly></textarea>
+            <div class="mail-actions">
+              <button class="button button-primary copy-button" type="button" data-copy-target="mailLowBody">Copiar cuerpo</button>
+              <button class="button button-gmail copy-button" type="button" data-gmail-group="Low">Gmail</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
       <article class="panel table-panel">
         <div class="panel-heading compact">
           <div><span class="section-kicker">DETALLE</span><h3>Seguimiento de estudiantes</h3></div>
@@ -271,9 +395,9 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Estudiante</th><th>Correo</th><th>Grupo</th><th>Entregas</th><th>Promedio</th><th>Último acceso</th><th>Estado</th><th>Motivo</th></tr></thead>
+            <thead><tr><th>Estudiante</th><th>Correo</th><th>Grupo</th><th>Entregas</th><th>Promedio</th><th>Último acceso</th><th>Estado usuario</th><th>Riesgo</th><th>Motivo</th></tr></thead>
             <tbody id="studentTableBody">
-              <tr><td colspan="8" class="table-empty">Cargá información para construir el seguimiento.</td></tr>
+              <tr><td colspan="9" class="table-empty">Cargá información para construir el seguimiento.</td></tr>
             </tbody>
           </table>
         </div>
